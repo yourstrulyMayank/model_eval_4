@@ -99,23 +99,69 @@ def index():
 @app.route('/model-evaluation')
 def model_evaluation():
     """Model evaluation page with tabs for standard and custom evaluation"""
-    model_name = request.args.get('model')
+    model_name = request.args.get('model').replace(" ", "_").lower()
     model_type = request.args.get('type')
     
     if not model_name or not model_type:
         flash("Invalid model selection")
         return redirect(url_for('index'))
     
+    # Load model details from details.json
+    model_details = load_model_details(model_type, model_name)
+    
+    if not model_details:
+        # Provide default details if file doesn't exist
+        model_details = {
+            'version': 'v1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%d'),
+            'framework': 'Unknown',
+            'status': 'Active',
+            'model_info': {
+                'model_type': 'Unknown',
+                'algorithm': 'Unknown',
+                'problem_type': 'Unknown'
+            },
+            'scope': {
+                'compliance_framework': 'N/A',
+                'target_variable': 'N/A',
+                'architecture': 'N/A',
+                'training_period': 'N/A',
+                'validation_approach': 'N/A'
+            },
+            'data_validation': {
+                'quality_score': 0,
+                'total_records': 0,
+                'missing_values': 0,
+                'duplicate_records': 0,
+                'outliers_detected': 0
+            }
+        }
+    print(model_name)
     # Store model data in session for access across tabs
     session['current_model'] = {
         'name': model_name,
-        'type': model_type
+        'type': model_type,
+        'details': model_details
     }
     
-    return render_template('model_evaluation.html', 
+    return render_template(f'model_evaluation_{model_type}.html', 
                          model_name=model_name, 
-                         model_type=model_type)
+                         model_type=model_type,
+                         model_details=model_details)
 
+def load_model_details(model_type, model_name):
+    # Build the path to details.json based on type and name
+    folder_map = {
+        "ml": "models",
+        "llm": "models",
+        "risk": "models"
+    }
+    folder = folder_map.get(model_type, "models")
+    details_path = os.path.join(folder, model_name, "details.json")
+    if not os.path.exists(details_path):
+        return None
+    with open(details_path, "r") as f:
+        return json.load(f)
 
 @app.route('/api/model-metadata/<model_name>')
 def get_model_metadata(model_name):

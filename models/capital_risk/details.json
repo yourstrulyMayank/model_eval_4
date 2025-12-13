@@ -1,0 +1,211 @@
+{
+  "model_name": "Capital_Risk_GradientBoostedRegression",
+  "version": "v2.1.0",
+  "last_updated": "2025-12-13",
+  "framework": "Scikit-learn / XGBoost",
+  "status": "Active",
+  "model_info": {
+    "model_type": "GradientBoostingRegressor",
+    "algorithm": "GradientBoostingRegressor",
+    "problem_type": "Regression",
+    "feature_count": 38,
+    "target_variable": "Capital Risk Score",
+    "model_description": "Advanced gradient boosting model for predicting capital risk exposure in banking portfolios"
+  },
+  "scope": {
+    "compliance_framework": "Basel III, SR 11-7",
+    "target_variable": "Capital Risk Score (0-100)",
+    "architecture": "Ensemble - Gradient Boosted Decision Trees",
+    "training_period": "2020-2023 (36 months)",
+    "validation_approach": "Out-of-time, Out-of-sample, K-fold Cross-validation",
+    "business_use_case": "Capital adequacy assessment and regulatory capital calculation"
+  },
+  "data_validation": {
+    "quality_score": 94,
+    "total_records": 2000,
+    "missing_values": 1.8,
+    "duplicate_records": 0.1,
+    "outliers_detected": 4.2,
+    "data_completeness": "96.5%",
+    "feature_correlation_threshold": 0.85
+  },
+  "model_parameters": {
+    "alpha": 0.9,
+    "ccp_alpha": 0.0,
+    "criterion": "friedman_mse",
+    "init": null,
+    "learning_rate": 0.1,
+    "loss": "squared_error",
+    "max_depth": 8,
+    "max_features": null,
+    "max_leaf_nodes": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 10,
+    "min_samples_split": 20,
+    "min_weight_fraction_leaf": 0.0,
+    "n_estimators": 100,
+    "n_iter_no_change": null,
+    "random_state": 42,
+    "subsample": 1.0,
+    "tol": 0.0001,
+    "validation_fraction": 0.1,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "feature_engineering": {
+    "total_features": 45,
+    "numerical_features": 32,
+    "categorical_features": 8,
+    "derived_features": 5,
+    "feature_importance_available": true,
+    "top_features": [
+      "Total_Exposure_Amount",
+      "Risk_Weighted_Assets",
+      "Leverage_Ratio",
+      "Counterparty_Credit_Rating",
+      "Portfolio_Concentration_Index"
+    ]
+  },
+  "benchmarks": {
+    "overall_score": 75,
+    "tests_passed": "27/28",
+    "accuracy": 94,
+    "primary_metric": 0.7596,
+    "r2_score": 0.7596,
+    "rmse": 881.71,
+    "mae": 237.9,
+    "mape": 1.19
+  },
+  "performance_thresholds": {
+    "r2_score_min": 0.85,
+    "rmse_max": 5.0,
+    "mae_max": 4.0,
+    "mape_max": 8.0,
+    "cv_score_min": 0.83
+  },
+  "comparison": {
+    "champion": {
+      "version": "v2.0.0",
+      "accuracy": "89%",
+      "r2_score": 0.86,
+      "rmse": 5.12,
+      "deployment_date": "2024-06-15"
+    },
+    "challenger": {
+      "version": "v2.1.0",
+      "accuracy": "94% \u00e2\u2020\u2018",
+      "r2_score": 0.89,
+      "rmse": 4.32,
+      "improvement": "+5%"
+    }
+  },
+  "model_governance": {
+    "model_owner": "Capital Markets Risk Team",
+    "model_validator": "Model Risk Management",
+    "last_validation_date": "2024-11-15",
+    "next_validation_date": "2025-05-15",
+    "validation_frequency": "Semi-Annual",
+    "approval_status": "Approved",
+    "limitations": [
+      "Limited performance in extreme market stress scenarios",
+      "Requires monthly recalibration for optimal performance"
+    ]
+  },
+  "production_monitoring": {
+    "deployment_date": "2024-11-20",
+    "prediction_volume_daily": 15000,
+    "average_inference_time_ms": 12,
+    "monitoring_frequency": "Daily",
+    "performance_degradation_threshold": 5,
+    "retraining_trigger": "Quarterly or performance degradation > 5%",
+    "last_evaluation_date": "2025-12-13"
+  },
+  "data_lineage": {
+    "training_data_source": "Capital Markets Data Warehouse",
+    "training_sample_size": 450000,
+    "test_sample_size": 125430,
+    "validation_sample_size": 75000,
+    "data_time_range": "2020-01-01 to 2023-12-31",
+    "preprocessing_pipeline": "StandardScaler + OneHotEncoder",
+    "feature_selection_method": "Recursive Feature Elimination + Domain Knowledge"
+  },
+  "risk_assessment": {
+    "model_risk_tier": "Tier 2 - High Impact",
+    "inherent_risk": "Medium-High",
+    "residual_risk": "Low-Medium",
+    "key_risks": [
+      "Data drift in volatile market conditions",
+      "Feature availability in production systems",
+      "Regulatory capital calculation sensitivity"
+    ],
+    "mitigation_strategies": [
+      "Continuous monitoring with automated alerts",
+      "Monthly model performance review",
+      "Fallback to conservative capital calculation"
+    ]
+  },
+  "documentation": {
+    "model_development_document": "docs/CapitalRisk_ModelDev_v2.1.pdf",
+    "validation_report": "docs/CapitalRisk_Validation_2024Q4.pdf",
+    "user_guide": "docs/CapitalRisk_UserGuide_v2.1.pdf",
+    "technical_specification": "docs/CapitalRisk_TechSpec_v2.1.pdf"
+  },
+  "audit_trail": {
+    "created_date": "2024-09-15",
+    "created_by": "ML Engineering Team",
+    "last_modified_date": "2025-12-13",
+    "last_modified_by": "Automated Evaluation System",
+    "change_log": [
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      },
+      {
+        "date": "2025-12-13",
+        "version": "v2.1.0",
+        "changes": "Automated evaluation completed - Regression model"
+      }
+    ]
+  }
+}

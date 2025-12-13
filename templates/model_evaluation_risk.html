@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Validation Workbench - {{ model_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(0, 0%, 98%);
+            color: hsl(0, 0%, 9%);
+            min-height: 100vh;
+        }
+
+        header {
+            border-bottom: 1px solid hsl(0, 0%, 93%);
+            background: hsl(0, 0%, 100%);
+        }
+
+        .header-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: hsl(0, 0%, 9%);
+        }
+
+        .header-content p {
+            font-size: 0.875rem;
+            color: hsl(0, 0%, 52.3%);
+        }
+
+        nav {
+            border-bottom: 1px solid hsl(0, 0%, 93%);
+            background: hsl(0, 0%, 100%);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: hsl(0, 0%, 52.3%);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .nav-link:hover {
+            color: hsl(0, 0%, 9%);
+            border-bottom-color: hsl(0, 0%, 93%);
+        }
+
+        .nav-link.active {
+            color: hsl(221.2, 83.2%, 53.3%);
+            border-bottom-color: hsl(221.2, 83.2%, 53.3%);
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: hsl(0, 0%, 100%);
+            border: 1px solid hsl(0, 0%, 93%);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            color: hsl(0, 0%, 52.3%);
+            font-size: 0.875rem;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            padding: 1rem;
+            background: hsl(0, 0%, 97.3%);
+            border-radius: 0.375rem;
+        }
+
+        .detail-item h4 {
+            font-size: 0.875rem;
+            color: hsl(0, 0%, 52.3%);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-item p {
+            font-size: 1rem;
+            font-weight: 600;
+            color: hsl(0, 0%, 9%);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table thead {
+            background: hsl(0, 0%, 97.3%);
+        }
+
+        .data-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: hsl(0, 0%, 52.3%);
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid hsl(0, 0%, 93%);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover {
+            background: hsl(0, 0%, 98%);
+        }
+
+        .badge {
+            display: inline-flex;
+            padding: 0.25rem 0.625rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: hsl(143, 85%, 96%);
+            color: hsl(140, 100%, 27%);
+        }
+
+        .badge-warning {
+            background: hsl(49, 100%, 97%);
+            color: hsl(31, 92%, 45%);
+        }
+
+        .sub-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid hsl(0, 0%, 93%);
+        }
+
+        .sub-tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: hsl(0, 0%, 52.3%);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-tab-btn:hover {
+            color: hsl(0, 0%, 9%);
+        }
+
+        .sub-tab-btn.active {
+            color: hsl(221.2, 83.2%, 53.3%);
+            border-bottom-color: hsl(221.2, 83.2%, 53.3%);
+        }
+
+        .sub-tab-content {
+            display: none;
+        }
+
+        .sub-tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, hsl(221.2, 83.2%, 95%), hsl(221.2, 83.2%, 98%));
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid hsl(221.2, 83.2%, 90%);
+        }
+
+        .stat-card h4 {
+            font-size: 0.875rem;
+            color: hsl(0, 0%, 52.3%);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: hsl(221.2, 83.2%, 53.3%);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid hsl(0, 0%, 93%);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            padding: 0.625rem 1.5rem;
+            background: hsl(221.2, 83.2%, 53.3%);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: hsl(221.2, 83.2%, 48%);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .model-comparison {
+            background: hsl(0, 0%, 100%);
+            border: 2px solid hsl(0, 0%, 93%);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .model-comparison.champion {
+            border-color: hsl(140, 100%, 27%);
+        }
+
+        .model-comparison.challenger {
+            border-color: hsl(31, 92%, 45%);
+        }
+
+        .model-comparison h4 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-wrap: wrap;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="header-content">
+                <h1>Model Validation Workbench</h1>
+                <p>{{ model_name }} - {{ model_type|upper }}</p>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="nav-container">
+            <div class="nav-links">
+                <button class="nav-link active" onclick="switchMainTab('dashboard')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>
+                    </svg>
+                    Validation Dashboard
+                </button>
+                <button class="nav-link" onclick="switchMainTab('loading')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" x2="12" y1="3" y2="15"></line>
+                    </svg>
+                    Model Loading
+                </button>
+                <button class="nav-link" onclick="switchMainTab('benchmarks')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v16a2 2 0 0 0 2 2h16"></path>
+                        <path d="M18 17V9"></path>
+                        <path d="M13 17V5"></path>
+                        <path d="M8 17v-3"></path>
+                    </svg>
+                    Benchmarks
+                </button>
+                <button class="nav-link" onclick="switchMainTab('comparison')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="18" r="3"></circle>
+                        <circle cx="6" cy="6" r="3"></circle>
+                        <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+                        <path d="M11 18H8a2 2 0 0 1-2-2V9"></path>
+                    </svg>
+                    Comparison
+                </button>
+            </div>
+        </div>
+        
+    </nav>
+    
+    <main>
+        <!-- Validation Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="card">
+                <h3>Model Details</h3>
+                <div class="data-grid">
+                    <div class="detail-item">
+                        <h4>Model Version</h4>
+                        <p>v2.1.0</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Last Updated</h4>
+                        <p>2024-11-15</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Framework</h4>
+                        <p>PyTorch</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Status</h4>
+                        <p>Active</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Scope Definition</h3>
+                <div class="data-grid">
+                    <div class="detail-item">
+                        <h4>Model Type</h4>
+                        <p>Credit Risk Model</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Compliance Framework</h4>
+                        <p>SR 11-7, Basel III</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Target Variable</h4>
+                        <p>Default Probability (PD)</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Architecture</h4>
+                        <p>Neural Network (5 layers)</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Training Period</h4>
+                        <p>2020-2023</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Validation Approach</h4>
+                        <p>Out-of-time, Out-of-sample</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Data Validation</h3>
+                <p style="margin-bottom: 1rem;">Test data quality score: <strong>92%</strong> <span class="badge badge-success">Complete</span></p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Total Records</td>
+                            <td>125,430</td>
+                            <td><span class="badge badge-success">Pass</span></td>
+                        </tr>
+                        <tr>
+                            <td>Missing Values</td>
+                            <td>2.3%</td>
+                            <td><span class="badge badge-success">Pass</span></td>
+                        </tr>
+                        <tr>
+                            <td>Duplicate Records</td>
+                            <td>0.1%</td>
+                            <td><span class="badge badge-success">Pass</span></td>
+                        </tr>
+                        <tr>
+                            <td>Outliers Detected</td>
+                            <td>5.8%</td>
+                            <td><span class="badge badge-warning">Review</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Model Loading Tab -->
+        <div id="loading-tab" class="tab-content">
+            <div class="card">
+                <h3>Model Upload</h3>
+                <p style="margin-bottom: 1rem;">Upload and configure your model files</p>
+                
+                <div class="form-group">
+                    <label>Model Type</label>
+                    <select class="form-control">
+                        <option>{{ model_type|upper }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload Model File (.pkl, .onnx, .json)</label>
+                    <input type="file" class="form-control" accept=".pkl,.onnx,.json">
+                </div>
+
+                <div class="form-group">
+                    <label>Upload Test Data (CSV, Parquet)</label>
+                    <input type="file" class="form-control" accept=".csv,.parquet">
+                </div>
+
+                <button class="btn-primary">Load Model & Proceed</button>
+            </div>
+
+            <div class="card" style="background: hsl(0, 0%, 97.3%);">
+                <h3>Data Preview</h3>
+                <p style="color: hsl(0, 0%, 52.3%);">Upload a file to preview the data</p>
+            </div>
+        </div>
+
+        <!-- Benchmarks Tab -->
+        <div id="benchmarks-tab" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Overall Score</h4>
+                    <div class="value">88%</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Tests Passed</h4>
+                    <div class="value">24/28</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Accuracy</h4>
+                    <div class="value">92%</div>
+                </div>
+                <div class="stat-card">
+                    <h4>ROC-AUC</h4>
+                    <div class="value">0.88</div>
+                </div>
+            </div>
+
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" onclick="switchSubTab('standard')">Standard Evaluation</button>
+                <button class="sub-tab-btn" onclick="switchSubTab('custom')">Custom Evaluation</button>
+            </div>
+
+            <!-- Standard Evaluation Sub-tab -->
+            <div id="standard-subtab" class="sub-tab-content active">
+                <div class="card">
+                    <h3>Standard Benchmark Results</h3>
+                    <p style="margin-bottom: 1rem;">Industry-standard evaluation metrics</p>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Current</th>
+                                <th>Target</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ROC-AUC</td>
+                                <td><strong>0.88</strong></td>
+                                <td>≥0.85</td>
+                                <td><span class="badge badge-success">Pass</span></td>
+                            </tr>
+                            <tr>
+                                <td>Accuracy</td>
+                                <td><strong>92%</strong></td>
+                                <td>≥90%</td>
+                                <td><span class="badge badge-success">Pass</span></td>
+                            </tr>
+                            <tr>
+                                <td>Precision</td>
+                                <td><strong>89%</strong></td>
+                                <td>≥85%</td>
+                                <td><span class="badge badge-success">Pass</span></td>
+                            </tr>
+                            <tr>
+                                <td>Recall</td>
+                                <td><strong>85%</strong></td>
+                                <td>≥80%</td>
+                                <td><span class="badge badge-success">Pass</span></td>
+                            </tr>
+                            <tr>
+                                <td>F1 Score</td>
+                                <td><strong>87%</strong></td>
+                                <td>≥82%</td>
+                                <td><span class="badge badge-success">Pass</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Custom Evaluation Sub-tab -->
+            <div id="custom-subtab" class="sub-tab-content">
+                <div class="card">
+                    <h3>Custom Test Results</h3>
+                    <p style="margin-bottom: 1rem;">Custom evaluation with user-defined metrics</p>
+                    
+                    <div style="text-align: center; padding: 3rem; background: hsl(0, 0%, 97.3%); border-radius: 0.5rem;">
+                        <p style="color: hsl(0, 0%, 52.3%);">No custom test data available. Upload test cases to begin evaluation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Tab -->
+        <div id="comparison-tab" class="tab-content">
+            <div class="card">
+                <h3>Champion vs Challenger Comparison</h3>
+                <p>Compare current production model with new challenger model</p>
+            </div>
+
+            <div class="comparison-grid">
+                <div class="model-comparison champion">
+                    <h4>🏆 Champion Model (Current)</h4>
+                    <div class="data-grid" style="grid-template-columns: 1fr;">
+                        <div class="detail-item">
+                            <h4>Model Version</h4>
+                            <p>v2.0.0</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Accuracy</h4>
+                            <p>89%</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>ROC-AUC</h4>
+                            <p>0.86</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Deployment Date</h4>
+                            <p>2024-06-15</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-comparison challenger">
+                    <h4>⚡ Challenger Model (New)</h4>
+                    <div class="data-grid" style="grid-template-columns: 1fr;">
+                        <div class="detail-item">
+                            <h4>Model Version</h4>
+                            <p>v2.1.0</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Accuracy</h4>
+                            <p style="color: hsl(140, 100%, 27%);">92% ↑</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>ROC-AUC</h4>
+                            <p style="color: hsl(140, 100%, 27%);">0.88 ↑</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4>Validation Date</h4>
+                            <p>2024-11-15</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Improvement Summary</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Champion</th>
+                            <th>Challenger</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Accuracy</td>
+                            <td>89%</td>
+                            <td>92%</td>
+                            <td style="color: hsl(140, 100%, 27%); font-weight: 600;">+3% ↑</td>
+                        </tr>
+                        <tr>
+                            <td>ROC-AUC</td>
+                            <td>0.86</td>
+                            <td>0.88</td>
+                            <td style="color: hsl(140, 100%, 27%); font-weight: 600;">+0.02 ↑</td>
+                        </tr>
+                        <tr>
+                            <td>Precision</td>
+                            <td>87%</td>
+                            <td>89%</td>
+                            <td style="color: hsl(140, 100%, 27%); font-weight: 600;">+2% ↑</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <button onclick="window.history.back()" style="padding: 0.5rem 1rem; border-radius: 0.375rem; background: hsl(221.2, 83.2%, 53.3%); color: white; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer;">
+    ← Back
+</button>
+    </main>
+
+    <script>
+        function switchMainTab(tabName) {
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Remove active class from all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to clicked nav link
+            event.target.closest('.nav-link').classList.add('active');
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function switchSubTab(tabName) {
+            // Remove active class from all sub-tab buttons
+            document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Remove active class from all sub-tab contents
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Show selected sub-tab content
+            document.getElementById(tabName + '-subtab').classList.add('active');
+        }
+    </script>
+</body>
+</html>

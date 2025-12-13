@@ -656,7 +656,14 @@ def calculate_detailed_metrics(y_true, y_pred, problem_type, model=None, X_test=
     from scipy import stats
 
     def convert_to_serializable(obj):
-        """Convert numpy types to Python native types for JSON serialization"""
+        """Convert numpy types to Python native types for JSON serialization, handling NaN/Inf"""
+        import numpy as np
+        
+        # Handle NaN and Infinity
+        if isinstance(obj, float) or isinstance(obj, np.floating):
+            if np.isnan(obj) or np.isinf(obj):
+                return None  # Convert NaN/Inf to null for valid JSON
+                
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -664,7 +671,7 @@ def calculate_detailed_metrics(y_true, y_pred, problem_type, model=None, X_test=
         elif isinstance(obj, np.bool_):
             return bool(obj)
         elif isinstance(obj, np.ndarray):
-            return obj.tolist()
+            return [convert_to_serializable(x) for x in obj]
         return obj
 
     metrics = {}
@@ -740,11 +747,18 @@ def calculate_detailed_metrics(y_true, y_pred, problem_type, model=None, X_test=
 def convert_numpy_types(obj):
     """Recursively convert numpy types to native Python types for JSON serialization."""
     import numpy as np
+    
     if isinstance(obj, dict):
         return {k: convert_numpy_types(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [convert_numpy_types(v) for v in obj]
-    elif isinstance(obj, np.integer):
+    
+    # Handle NaN and Infinity at the top level check
+    if isinstance(obj, (float, np.floating)):
+        if np.isnan(obj) or np.isinf(obj):
+            return None
+            
+    if isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
         return float(obj)

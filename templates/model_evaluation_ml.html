@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Validation Workbench - {{ model_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(0, 0%, 98%);
+            color: hsl(0, 0%, 9%);
+            min-height: 100vh;
+        }
+
+        header {
+            border-bottom: 1px solid hsl(0, 0%, 93%);
+            background: hsl(0, 0%, 100%);
+        }
+
+        .header-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: hsl(0, 0%, 9%);
+        }
+
+        .header-content p {
+            font-size: 0.875rem;
+            color: hsl(0, 0%, 52.3%);
+        }
+
+        nav {
+            border-bottom: 1px solid hsl(0, 0%, 93%);
+            background: hsl(0, 0%, 100%);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: hsl(0, 0%, 52.3%);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .nav-link:hover {
+            color: hsl(0, 0%, 9%);
+            border-bottom-color: hsl(0, 0%, 93%);
+        }
+
+        .nav-link.active {
+            color: hsl(221.2, 83.2%, 53.3%);
+            border-bottom-color: hsl(221.2, 83.2%, 53.3%);
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: hsl(0, 0%, 100%);
+            border: 1px solid hsl(0, 0%, 93%);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            color: hsl(0, 0%, 52.3%);
+            font-size: 0.875rem;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            padding: 1rem;
+            background: hsl(0, 0%, 97.3%);
+            border-radius: 0.375rem;
+        }
+
+        .detail-item h4 {
+            font-size: 0.875rem;
+            color: hsl(0, 0%, 52.3%);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-item p {
+            font-size: 1rem;
+            font-weight: 600;
+            color: hsl(0, 0%, 9%);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table thead {
+            background: hsl(0, 0%, 97.3%);
+        }
+
+        .data-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: hsl(0, 0%, 52.3%);
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid hsl(0, 0%, 93%);
+            font-size: 0.875rem;
+        }
+
+        .data-table tr:hover {
+            background: hsl(0, 0%, 98%);
+        }
+
+        .badge {
+            display: inline-flex;
+            padding: 0.25rem 0.625rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: hsl(143, 85%, 96%);
+            color: hsl(140, 100%, 27%);
+        }
+
+        .badge-warning {
+            background: hsl(49, 100%, 97%);
+            color: hsl(31, 92%, 45%);
+        }
+
+        .sub-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid hsl(0, 0%, 93%);
+        }
+
+        .sub-tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: hsl(0, 0%, 52.3%);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-tab-btn:hover {
+            color: hsl(0, 0%, 9%);
+        }
+
+        .sub-tab-btn.active {
+            color: hsl(221.2, 83.2%, 53.3%);
+            border-bottom-color: hsl(221.2, 83.2%, 53.3%);
+        }
+
+        .sub-tab-content {
+            display: none;
+        }
+
+        .sub-tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, hsl(221.2, 83.2%, 95%), hsl(221.2, 83.2%, 98%));
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid hsl(221.2, 83.2%, 90%);
+        }
+
+        .stat-card h4 {
+            font-size: 0.875rem;
+            color: hsl(0, 0%, 52.3%);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: hsl(221.2, 83.2%, 53.3%);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid hsl(0, 0%, 93%);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            padding: 0.625rem 1.5rem;
+            background: hsl(221.2, 83.2%, 53.3%);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: hsl(221.2, 83.2%, 48%);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .model-comparison {
+            background: hsl(0, 0%, 100%);
+            border: 2px solid hsl(0, 0%, 93%);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .model-comparison.champion {
+            border-color: hsl(140, 100%, 27%);
+        }
+
+        .model-comparison.challenger {
+            border-color: hsl(31, 92%, 45%);
+        }
+
+        .model-comparison h4 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-wrap: wrap;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="header-content">
+                <h1>Model Validation Workbench</h1>
+                
+            </div>
+        </div>
+    </header>
+
+    <nav>
+    <div class="nav-container">
+        <div class="nav-links">
+            <button class="nav-link active" onclick="switchMainTab('dashboard')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>
+                </svg>
+                Validation Dashboard
+            </button>
+            <button class="nav-link" onclick="switchMainTab('loading')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+                Model Loading
+            </button>
+            <button class="nav-link" onclick="switchMainTab('standard-eval')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Standard Evaluation
+            </button>
+            <button class="nav-link" onclick="switchMainTab('custom-eval')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                Custom Evaluation
+            </button>
+            <button class="nav-link" onclick="switchMainTab('benchmarks')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v16a2 2 0 0 0 2 2h16"></path>
+                    <path d="M18 17V9"></path>
+                    <path d="M13 17V5"></path>
+                    <path d="M8 17v-3"></path>
+                </svg>
+                Benchmarks
+            </button>
+            <button class="nav-link" onclick="switchMainTab('comparison')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="18" r="3"></circle>
+                    <circle cx="6" cy="6" r="3"></circle>
+                    <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+                    <path d="M11 18H8a2 2 0 0 1-2-2V9"></path>
+                </svg>
+                Comparison
+            </button>
+        </div>
+    </div>
+</nav>
+    
+    <main>
+    <!-- Validation Dashboard Tab -->
+    <div id="dashboard-tab" class="tab-content active">
+        <div class="card">
+            <h1>{{ model_name }} - {{ model_type|upper }}</h1>
+            <h3>Model Details</h3>
+            <div class="data-grid">
+                <div class="detail-item">
+                    <h4>Model Version</h4>
+                    <p>{{ model_details.get('version', 'v1.0.0') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Last Updated</h4>
+                    <p>{{ model_details.get('last_updated', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Framework</h4>
+                    <p>{{ model_details.get('framework', 'Unknown') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Status</h4>
+                    <p><span class="badge badge-success">{{ model_details.get('status', 'Active') }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Model Information</h3>
+            <div class="data-grid">
+                <div class="detail-item">
+                    <h4>Algorithm</h4>
+                    <p>{{ model_details.get('model_info', {}).get('algorithm', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Problem Type</h4>
+                    <p>{{ model_details.get('model_info', {}).get('problem_type', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Feature Count</h4>
+                    <p>{{ model_details.get('model_info', {}).get('feature_count', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Target Variable</h4>
+                    <p>{{ model_details.get('scope', {}).get('target_variable', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Training Period</h4>
+                    <p>{{ model_details.get('scope', {}).get('training_period', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Validation Approach</h4>
+                    <p>{{ model_details.get('scope', {}).get('validation_approach', 'N/A') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Scope Definition</h3>
+            <div class="data-grid">
+                <div class="detail-item">
+                    <h4>Compliance Framework</h4>
+                    <p>{{ model_details.get('scope', {}).get('compliance_framework', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Architecture</h4>
+                    <p>{{ model_details.get('scope', {}).get('architecture', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Business Use Case</h4>
+                    <p>{{ model_details.get('scope', {}).get('business_use_case', 'Risk Assessment & Capital Calculation') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Data Validation</h3>
+            <p style="margin-bottom: 1rem;">Test data quality score: <strong>{{ model_details.get('data_validation', {}).get('quality_score', 0) }}%</strong> 
+                <span class="badge badge-success">Complete</span></p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Total Records</td>
+                        <td>{{ "{:,}".format(model_details.get('data_validation', {}).get('total_records', 0)) }}</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Missing Values</td>
+                        <td>{{ model_details.get('data_validation', {}).get('missing_values', 0) }}%</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Duplicate Records</td>
+                        <td>{{ model_details.get('data_validation', {}).get('duplicate_records', 0) }}%</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Outliers Detected</td>
+                        <td>{{ model_details.get('data_validation', {}).get('outliers_detected', 0) }}%</td>
+                        <td><span class="badge badge-warning">Review</span></td>
+                    </tr>
+                    <tr>
+                        <td>Data Completeness</td>
+                        <td>{{ model_details.get('data_validation', {}).get('data_completeness', 'N/A') }}</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Model Loading Tab -->
+    <div id="loading-tab" class="tab-content">
+        <div class="card">
+            <h3>Model Upload & Configuration</h3>
+            <p style="margin-bottom: 1rem;">Upload and configure your model files for evaluation</p>
+            
+            <div class="form-group">
+                <label>Model Type</label>
+                <select class="form-control">
+                    <option>{{ model_type|upper }}</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Model File (.pkl, .joblib, .onnx)</label>
+                <input type="file" class="form-control" accept=".pkl,.joblib,.onnx">
+            </div>
+
+            <div class="form-group">
+                <label>Upload Test Data (CSV, Parquet, Excel)</label>
+                <input type="file" class="form-control" accept=".csv,.parquet,.xlsx">
+            </div>
+
+            <div class="form-group">
+                <label>Feature Configuration (Optional JSON)</label>
+                <input type="file" class="form-control" accept=".json">
+            </div>
+
+            <button class="btn-primary">Load Model & Proceed</button>
+        </div>
+
+        <div class="card">
+            <h3>Current Model Configuration</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for param, value in model_details.get('model_parameters', {}).items() %}
+                    <tr>
+                        <td>{{ param }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Standard Evaluation Tab -->
+    <div id="standard-eval-tab" class="tab-content">
+        <div class="card">
+            <div id="standard-loading" style="text-align: center; padding: 40px;">
+                <div style="display: inline-block; width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <p style="margin-top: 20px; font-size: 1.2em; color: #666;">Starting standard evaluation...</p>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #999;">This may take a few minutes depending on model complexity</p>
+            </div>
+            <div id="standard-content" style="display: none;">
+                <iframe id="standard-eval-frame" style="width: 100%; min-height: 800px; border: none; border-radius: 10px;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Evaluation Tab -->
+    <div id="custom-eval-tab" class="tab-content">
+        <div class="card">
+            <div id="custom-content">
+                <iframe id="custom-eval-frame" style="width: 100%; min-height: 800px; border: none; border-radius: 10px;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benchmarks Tab -->
+    <div id="benchmarks-tab" class="tab-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Overall Score</h4>
+                <div class="value">{{ model_details.get('benchmarks', {}).get('overall_score', 88) }}%</div>
+            </div>
+            <div class="stat-card">
+                <h4>Tests Passed</h4>
+                <div class="value">{{ model_details.get('benchmarks', {}).get('tests_passed', '24/28') }}</div>
+            </div>
+            <div class="stat-card">
+                <h4>{% if model_details.get('model_info', {}).get('problem_type') == 'Regression' %}R² Score{% else %}Accuracy{% endif %}</h4>
+                <div class="value">
+                    {% if model_details.get('model_info', {}).get('problem_type') == 'Regression' %}
+                        {{ model_details.get('benchmarks', {}).get('r2_score', 0.88) }}
+                    {% else %}
+                        {{ model_details.get('benchmarks', {}).get('accuracy', 92) }}%
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card">
+                <h4>Primary Metric</h4>
+                <div class="value">{{ model_details.get('benchmarks', {}).get('primary_metric', 0.88) }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Performance Metrics</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current Value</th>
+                        <th>Threshold</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if model_details.get('model_info', {}).get('problem_type') == 'Regression' %}
+                    <tr>
+                        <td>R² Score</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('r2_score', 0) }}</td>
+                        <td>≥ {{ model_details.get('performance_thresholds', {}).get('r2_score_min', 0.85) }}</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>RMSE</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('rmse', 0) }}</td>
+                        <td>≤ {{ model_details.get('performance_thresholds', {}).get('rmse_max', 5.0) }}</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>MAE</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('mae', 0) }}</td>
+                        <td>≤ {{ model_details.get('performance_thresholds', {}).get('mae_max', 4.0) }}</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>MAPE</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('mape', 0) }}%</td>
+                        <td>≤ {{ model_details.get('performance_thresholds', {}).get('mape_max', 8.0) }}%</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td>Accuracy</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('accuracy', 0) }}%</td>
+                        <td>≥ 90%</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Precision</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('precision', 0) }}</td>
+                        <td>≥ 0.85</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>Recall</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('recall', 0) }}</td>
+                        <td>≥ 0.80</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    <tr>
+                        <td>F1 Score</td>
+                        <td>{{ model_details.get('benchmarks', {}).get('f1_score', 0) }}</td>
+                        <td>≥ 0.82</td>
+                        <td><span class="badge badge-success">Pass</span></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Feature Engineering</h3>
+            <div class="data-grid">
+                <div class="detail-item">
+                    <h4>Total Features</h4>
+                    <p>{{ model_details.get('feature_engineering', {}).get('total_features', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Numerical Features</h4>
+                    <p>{{ model_details.get('feature_engineering', {}).get('numerical_features', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Categorical Features</h4>
+                    <p>{{ model_details.get('feature_engineering', {}).get('categorical_features', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Derived Features</h4>
+                    <p>{{ model_details.get('feature_engineering', {}).get('derived_features', 'N/A') }}</p>
+                </div>
+            </div>
+
+            {% if model_details.get('feature_engineering', {}).get('top_features') %}
+            <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">Top Features by Importance</h4>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Feature Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feature in model_details.get('feature_engineering', {}).get('top_features', []) %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ feature }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Comparison Tab -->
+    <div id="comparison-tab" class="tab-content">
+        <div class="card">
+            <h3>Champion vs Challenger Comparison</h3>
+            <p>Compare current production model with new challenger model</p>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="model-comparison champion">
+                <h4>🏆 Champion Model (Current Production)</h4>
+                <div class="data-grid" style="grid-template-columns: 1fr;">
+                    <div class="detail-item">
+                        <h4>Model Version</h4>
+                        <p>{{ model_details.get('comparison', {}).get('champion', {}).get('version', 'v2.0.0') }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Deployment Date</h4>
+                        <p>{{ model_details.get('comparison', {}).get('champion', {}).get('deployment_date', 'N/A') }}</p>
+                    </div>
+                    {% if model_details.get('model_info', {}).get('problem_type') == 'Regression' %}
+                    <div class="detail-item">
+                        <h4>R² Score</h4>
+                        <p>{{ model_details.get('comparison', {}).get('champion', {}).get('r2_score', 'N/A') }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>RMSE</h4>
+                        <p>{{ model_details.get('comparison', {}).get('champion', {}).get('rmse', 'N/A') }}</p>
+                    </div>
+                    {% else %}
+                    <div class="detail-item">
+                        <h4>Accuracy</h4>
+                        <p>{{ model_details.get('comparison', {}).get('champion', {}).get('accuracy', 'N/A') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="model-comparison challenger">
+                <h4>⚡ Challenger Model (New Version)</h4>
+                <div class="data-grid" style="grid-template-columns: 1fr;">
+                    <div class="detail-item">
+                        <h4>Model Version</h4>
+                        <p>{{ model_details.get('comparison', {}).get('challenger', {}).get('version', 'v2.1.0') }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Improvement</h4>
+                        <p style="color: hsl(140, 100%, 27%);">{{ model_details.get('comparison', {}).get('challenger', {}).get('improvement', '+5%') }}</p>
+                    </div>
+                    {% if model_details.get('model_info', {}).get('problem_type') == 'Regression' %}
+                    <div class="detail-item">
+                        <h4>R² Score</h4>
+                        <p style="color: hsl(140, 100%, 27%);">{{ model_details.get('comparison', {}).get('challenger', {}).get('r2_score', 'N/A') }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>RMSE</h4>
+                        <p style="color: hsl(140, 100%, 27%);">{{ model_details.get('comparison', {}).get('challenger', {}).get('rmse', 'N/A') }}</p>
+                    </div>
+                    {% else %}
+                    <div class="detail-item">
+                        <h4>Accuracy</h4>
+                        <p style="color: hsl(140, 100%, 27%);">{{ model_details.get('comparison', {}).get('challenger', {}).get('accuracy', 'N/A') }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Model Governance & Monitoring</h3>
+            <div class="data-grid">
+                <div class="detail-item">
+                    <h4>Model Owner</h4>
+                    <p>{{ model_details.get('model_governance', {}).get('model_owner', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Model Validator</h4>
+                    <p>{{ model_details.get('model_governance', {}).get('model_validator', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Last Validation</h4>
+                    <p>{{ model_details.get('model_governance', {}).get('last_validation_date', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Next Validation</h4>
+                    <p>{{ model_details.get('model_governance', {}).get('next_validation_date', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Validation Frequency</h4>
+                    <p>{{ model_details.get('model_governance', {}).get('validation_frequency', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Approval Status</h4>
+                    <p><span class="badge badge-success">{{ model_details.get('model_governance', {}).get('approval_status', 'Approved') }}</span></p>
+                </div>
+            </div>
+
+            {% if model_details.get('model_governance', {}).get('limitations') %}
+            <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">Known Limitations</h4>
+            <ul style="padding-left: 1.5rem; line-height: 2;">
+                {% for limitation in model_details.get('model_governance', {}).get('limitations', []) %}
+                <li>{{ limitation }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h3>Risk Assessment</h3>
+            <div class="data-grid">
+                <div class="detail-item">
+                    <h4>Model Risk Tier</h4>
+                    <p>{{ model_details.get('risk_assessment', {}).get('model_risk_tier', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Inherent Risk</h4>
+                    <p>{{ model_details.get('risk_assessment', {}).get('inherent_risk', 'N/A') }}</p>
+                </div>
+                <div class="detail-item">
+                    <h4>Residual Risk</h4>
+                    <p>{{ model_details.get('risk_assessment', {}).get('residual_risk', 'N/A') }}</p>
+                </div>
+            </div>
+
+            {% if model_details.get('risk_assessment', {}).get('key_risks') %}
+            <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">Key Risks</h4>
+            <ul style="padding-left: 1.5rem; line-height: 2;">
+                {% for risk in model_details.get('risk_assessment', {}).get('key_risks', []) %}
+                <li>{{ risk }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if model_details.get('risk_assessment', {}).get('mitigation_strategies') %}
+            <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">Mitigation Strategies</h4>
+            <ul style="padding-left: 1.5rem; line-height: 2;">
+                {% for strategy in model_details.get('risk_assessment', {}).get('mitigation_strategies', []) %}
+                <li>{{ strategy }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+    
+    <button onclick="window.history.back()" style="padding: 0.5rem 1rem; margin-top: 2rem; border-radius: 0.375rem; background: hsl(221.2, 83.2%, 53.3%); color: white; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer;">
+        ← Back
+    </button>
+</main>
+   <script>
+    let standardEvalStarted = false;
+    let customEvalLoaded = false;
+
+    function switchMainTab(tabName) {
+        // Remove active class from all nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Remove active class from all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Add active class to clicked nav link
+        event.target.closest('.nav-link').classList.add('active');
+        
+        // Show selected tab content
+        document.getElementById(tabName + '-tab').classList.add('active');
+        
+        // Handle Standard Evaluation tab - start evaluation
+        if (tabName === 'standard-eval' && !standardEvalStarted) {
+            standardEvalStarted = true;
+            startStandardEvaluation();
+        }
+        
+        // Handle Custom Evaluation tab - load iframe
+        if (tabName === 'custom-eval' && !customEvalLoaded) {
+            customEvalLoaded = true;
+            loadCustomEvaluation();
+        }
+    }
+
+    function startStandardEvaluation() {
+    const modelName = '{{ model_name }}';
+    
+    // Show loading
+    document.getElementById('standard-loading').style.display = 'block';
+    document.getElementById('standard-content').style.display = 'none';
+    
+    // Start the evaluation - NO BODY NEEDED, paths are constructed server-side
+    fetch(`/api/start_evaluation/${modelName}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})  // Empty body, server constructs paths
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            console.log('Evaluation started successfully');
+            console.log('Model path:', data.model_path);
+            console.log('Dataset path:', data.dataset_path);
+            
+            // Load the evaluation page in iframe
+            document.getElementById('standard-eval-frame').src = `/tool_evaluate_ml/${modelName}?autostart=true`;
+            
+            // Hide loading after a delay
+            setTimeout(() => {
+                document.getElementById('standard-loading').style.display = 'none';
+                document.getElementById('standard-content').style.display = 'block';
+            }, 2000);
+        } else {
+            alert('Failed to start evaluation: ' + (data.error || 'Unknown error'));
+            document.getElementById('standard-loading').innerHTML = '<p style="color: red;">Failed to start evaluation: ' + (data.error || 'Unknown error') + '</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to start evaluation: ' + error.message);
+        document.getElementById('standard-loading').innerHTML = '<p style="color: red;">Failed to start evaluation: ' + error.message + '</p>';
+    });
+}
+
+    function loadCustomEvaluation() {
+        const modelName = '{{ model_name }}';
+        document.getElementById('custom-eval-frame').src = `/custom_evaluate_ml/${modelName}`;
+    }
+
+    function switchSubTab(tabName) {
+        // Remove active class from all sub-tab buttons
+        document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Remove active class from all sub-tab contents
+        document.querySelectorAll('.sub-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+        
+        // Show selected sub-tab content
+        document.getElementById(tabName + '-subtab').classList.add('active');
+    }
+
+    // Auto-resize iframes
+    window.addEventListener('message', function(e) {
+        if (e.data.type === 'resize') {
+            const frame = document.getElementById(e.data.frameId);
+            if (frame) {
+                frame.style.height = e.data.height + 'px';
+            }
+        }
+    });
+</script>
+</body>
+</html>

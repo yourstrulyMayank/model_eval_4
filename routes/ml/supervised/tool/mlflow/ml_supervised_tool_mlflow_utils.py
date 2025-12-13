@@ -370,7 +370,7 @@ def run_ml_evaluation(model_name, model_path, dataset_path):
             
             # Store results
             ml_evaluation_results[model_name] = results
-            
+            update_model_details_json(model_name, results)
             update_progress(model_name, "Evaluation completed!", 100)
             
             return results
@@ -650,3 +650,123 @@ def generate_ml_report(results):
         }
     
     return json.dumps(report, indent=2, default=str)
+
+
+def update_model_details_json(model_name, evaluation_results):
+    """
+    Update the model's details.json file with latest evaluation results.
+    Automatically updates benchmarks, metrics, model info, and audit trail.
+    """
+    try:
+        # Construct path to details.json
+        details_path = os.path.join('models', model_name, 'details.json')
+        
+        # Load existing details or create new structure
+        if os.path.exists(details_path):
+            with open(details_path, 'r') as f:
+                details = json.load(f)
+        else:
+            # Create default structure if file doesn't exist
+            details = {
+                "model_name": model_name,
+                "version": "v1.0.0",
+                "framework": "Scikit-learn",
+                "status": "Active"
+            }
+        
+        # Update with latest evaluation timestamp
+        details['last_updated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # ========== Update Model Info ==========
+        if 'model_info' not in details:
+            details['model_info'] = {}
+        
+        model_info = evaluation_results.get('model_info', {})
+        details['model_info'].update({
+            'model_type': model_info.get('model_type', 'Unknown'),
+            'algorithm': model_info.get('model_type', 'Unknown'),
+            'problem_type': evaluation_results.get('problem_type', 'Unknown').capitalize(),
+            'feature_count': model_info.get('feature_count') or evaluation_results.get('num_features', 0)
+        })
+        
+        # ========== Update Benchmarks with Latest Metrics ==========
+        if 'benchmarks' not in details:
+            details['benchmarks'] = {}
+        
+        metrics = evaluation_results.get('metrics', {})
+        problem_type = evaluation_results.get('problem_type', 'regression')
+        
+        if problem_type == 'regression':
+            # Regression metrics
+            r2 = metrics.get('r2', 0)
+            details['benchmarks'].update({
+                'overall_score': int(r2 * 100) if r2 else 0,
+                'primary_metric': round(r2, 4) if r2 else 0,
+                'r2_score': round(r2, 4) if r2 else 0,
+                'rmse': round(metrics.get('rmse', 0), 2),
+                'mae': round(metrics.get('mae', 0), 2),
+                'mape': round(metrics.get('mape', 0), 2) if metrics.get('mape') else 0
+            })
+        else:
+            # Classification metrics
+            accuracy = metrics.get('accuracy', 0)
+            details['benchmarks'].update({
+                'overall_score': int(accuracy * 100) if accuracy else 0,
+                'accuracy': int(accuracy * 100) if accuracy else 0,
+                'primary_metric': round(metrics.get('roc_auc', accuracy), 4),
+                'precision': round(metrics.get('precision_weighted', 0), 4),
+                'recall': round(metrics.get('recall_weighted', 0), 4),
+                'f1_score': round(metrics.get('f1_weighted', 0), 4)
+            })
+        
+        # ========== Update Data Validation ==========
+        if 'data_validation' not in details:
+            details['data_validation'] = {}
+        
+        details['data_validation'].update({
+            'total_records': evaluation_results.get('num_test_samples', 0)
+        })
+        
+        # ========== Update Model Parameters if Available ==========
+        if model_info.get('model_params'):
+            details['model_parameters'] = model_info['model_params']
+        
+        # ========== Update Production Monitoring ==========
+        if 'production_monitoring' not in details:
+            details['production_monitoring'] = {}
+        
+        details['production_monitoring']['last_evaluation_date'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # ========== Update Audit Trail ==========
+        if 'audit_trail' not in details:
+            details['audit_trail'] = {
+                'created_date': datetime.now().strftime('%Y-%m-%d'),
+                'created_by': 'ML Engineering Team',
+                'change_log': []
+            }
+        
+        details['audit_trail']['last_modified_date'] = datetime.now().strftime('%Y-%m-%d')
+        details['audit_trail']['last_modified_by'] = 'Automated Evaluation System'
+        
+        # Add change log entry at the beginning
+        details['audit_trail']['change_log'].insert(0, {
+            'date': datetime.now().strftime('%Y-%m-%d'),
+            'version': details.get('version', 'v1.0.0'),
+            'changes': f"Automated evaluation completed - {problem_type.capitalize()} model"
+        })
+        
+        # Keep only last 10 change log entries
+        if len(details['audit_trail']['change_log']) > 10:
+            details['audit_trail']['change_log'] = details['audit_trail']['change_log'][:10]
+        
+        # ========== Save Updated Details ==========
+        os.makedirs(os.path.dirname(details_path), exist_ok=True)
+        with open(details_path, 'w') as f:
+            json.dump(details, f, indent=2)
+        
+        print(f"✓ Updated details.json for {model_name}")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error updating details.json: {e}")
+        return False

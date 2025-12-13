@@ -130,8 +130,9 @@ def start_evaluation_api(model_name):
     print(f'Starting the evaluation api for model: {model_name}')
     try:
         # Get model and dataset paths from request or session
-        model_path = request.json.get('model_path')
-        dataset_path = request.json.get('dataset_path')
+        model_path = os.path.join('models', model_name, 'model', 'model.pkl')
+        print(model_path)
+        dataset_path = os.path.join('models', model_name, 'dataset', 'test.csv')
         print(f"Model path: {model_path}, Dataset path: {dataset_path}")
         
         if not model_path or not dataset_path:
@@ -155,6 +156,100 @@ def start_evaluation_api(model_name):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@ml_s_t_mlflow_bp.route('/tool_evaluate_ml/<model_name>')
+def tool_evaluate_ml_page(model_name):
+    """Render the tool evaluation page for ML models."""
+    return render_template('tool_evaluate_ml.html', 
+                         model_name=model_name,
+                         subcategory='supervised',
+                         benchmark='MLFlow')
+
+
+
+# @ml_s_t_mlflow_bp.route('/api/start_evaluation/<model_name>', methods=['POST'])
+# def api_start_evaluation(model_name):
+#     """
+#     API endpoint to start or restart ML evaluation for a model.
+#     This will clear previous results and start a new evaluation.
+#     """
+#     try:
+#         # You may want to get subcategory and benchmark from request if needed
+#         subcategory = request.json.get('subcategory', 'supervised')
+#         benchmark =  'MLFlow'
+
+#         # Paths for model and test data
+        
+#         model_path = os.path.join('models', 'ml', subcategory, model_name, 'model')
+#         dataset_path = os.path.join('models', 'ml', subcategory, model_name, 'dataset')        
+#         test_csv_path = os.path.join(dataset_path, 'test.csv')  # Look for test.csv in model directory
+#         model_file_path = os.path.join(model_path, 'model.pkl')  # Look for model.pkl
+#         # Validate paths
+#         if not os.path.exists(model_path) or not os.path.exists(test_csv_path):
+#             return jsonify({'error': 'Model or test data not found'}), 400
+
+#         # Clear previous progress/results
+#         clear_ml_progress(model_name)
+
+#         # Start evaluation in background
+#         from concurrent.futures import ThreadPoolExecutor
+#         with ThreadPoolExecutor(max_workers=1) as executor:
+#             executor.submit(run_ml_evaluation, model_name, model_file_path, test_csv_path)
+
+#         return jsonify({'status': 'started', 'message': 'Evaluation started successfully'})
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
+
+
+
+# @ml_s_t_mlflow_bp.route('/api/start_evaluation/<model_name>', methods=['POST'])
+# def api_start_evaluation(model_name):
+#     """
+#     API endpoint to start or restart ML evaluation for a model.
+#     This will clear previous results and start a new evaluation.
+#     """
+#     try:
+#         # Get subcategory and benchmark from request if provided
+#         subcategory = request.json.get('subcategory', 'supervised') if request.json else 'supervised'
+#         benchmark = 'MLFlow'
+
+#         # Paths for model and test data - CORRECTED PATH STRUCTURE
+#         # Changed from: models/ml/supervised/model_name/...
+#         # To: models/model_name/...
+#         model_path = os.path.join('models', model_name, 'model')
+#         dataset_path = os.path.join('models', model_name, 'dataset')        
+#         test_csv_path = os.path.join(dataset_path, 'test.csv')
+#         model_file_path = os.path.join(model_path, 'model.pkl')
+        
+#         print(f"Looking for model at: {model_file_path}")
+#         print(f"Looking for test data at: {test_csv_path}")
+        
+#         # Validate paths
+#         if not os.path.exists(model_file_path):
+#             return jsonify({'error': f'Model file not found: {model_file_path}'}), 400
+        
+#         if not os.path.exists(test_csv_path):
+#             return jsonify({'error': f'Test data not found: {test_csv_path}'}), 400
+
+#         # Clear previous progress/results
+#         clear_ml_progress(model_name)
+
+#         # Start evaluation in background
+#         from concurrent.futures import ThreadPoolExecutor
+        
+#         def run_evaluation_task():
+#             try:
+#                 run_ml_evaluation(model_name, model_file_path, test_csv_path)
+#             except Exception as e:
+#                 print(f"Evaluation task failed: {e}")
+#                 update_progress(model_name, f"Error: {str(e)}", 0)
+        
+#         with ThreadPoolExecutor(max_workers=1) as executor:
+#             executor.submit(run_evaluation_task)
+
+#         return jsonify({'status': 'started', 'message': 'Evaluation started successfully'})
+#     except Exception as e:
+#         print(f"Error in api_start_evaluation: {e}")
+#         return jsonify({'error': str(e)}), 500
 
 @ml_s_t_mlflow_bp.route('/api/start_evaluation/<model_name>', methods=['POST'])
 def api_start_evaluation(model_name):
@@ -163,30 +258,53 @@ def api_start_evaluation(model_name):
     This will clear previous results and start a new evaluation.
     """
     try:
-        # You may want to get subcategory and benchmark from request if needed
-        subcategory = request.json.get('subcategory', 'supervised')
-        benchmark =  'MLFlow'
+        # Get subcategory and benchmark from request if provided
+        data = request.get_json() if request.is_json else {}
+        subcategory = data.get('subcategory', 'supervised')
+        benchmark = 'MLFlow'
 
-        # Paths for model and test data
+        # Paths for model and test data - CORRECTED PATH STRUCTURE
+        model_path = os.path.join('models', model_name, 'model')
+        dataset_path = os.path.join('models', model_name, 'dataset')        
+        test_csv_path = os.path.join(dataset_path, 'test.csv')
+        model_file_path = os.path.join(model_path, 'model.pkl')
         
-        model_path = os.path.join('models', 'ml', subcategory, model_name, 'model')
-        dataset_path = os.path.join('models', 'ml', subcategory, model_name, 'dataset')        
-        test_csv_path = os.path.join(dataset_path, 'test.csv')  # Look for test.csv in model directory
-        model_file_path = os.path.join(model_path, 'model.pkl')  # Look for model.pkl
+        print(f"Looking for model at: {model_file_path}")
+        print(f"Looking for test data at: {test_csv_path}")
+        
         # Validate paths
-        if not os.path.exists(model_path) or not os.path.exists(test_csv_path):
-            return jsonify({'error': 'Model or test data not found'}), 400
+        if not os.path.exists(model_file_path):
+            return jsonify({'error': f'Model file not found: {model_file_path}'}), 400
+        
+        if not os.path.exists(test_csv_path):
+            return jsonify({'error': f'Test data not found: {test_csv_path}'}), 400
 
         # Clear previous progress/results
         clear_ml_progress(model_name)
 
         # Start evaluation in background
         from concurrent.futures import ThreadPoolExecutor
+        
+        def run_evaluation_task():
+            try:
+                run_ml_evaluation(model_name, model_file_path, test_csv_path)
+            except Exception as e:
+                print(f"Evaluation task failed: {e}")
+                update_progress(model_name, f"Error: {str(e)}", 0)
+        
         with ThreadPoolExecutor(max_workers=1) as executor:
-            executor.submit(run_ml_evaluation, model_name, model_file_path, test_csv_path)
+            executor.submit(run_evaluation_task)
 
-        return jsonify({'status': 'started', 'message': 'Evaluation started successfully'})
+        return jsonify({
+            'status': 'started', 
+            'message': 'Evaluation started successfully',
+            'model_path': model_file_path,
+            'dataset_path': test_csv_path
+        })
     except Exception as e:
+        print(f"Error in api_start_evaluation: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
     
 @ml_s_t_mlflow_bp.route('/api/clear_ml_evaluation/<model_name>', methods=['POST'])

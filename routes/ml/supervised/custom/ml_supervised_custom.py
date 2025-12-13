@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import traceback
 import threading
+import numpy as np
 from datetime import datetime
 from .ml_supervised_custom_utils import (
     run_custom_ml_evaluation_task,
@@ -12,18 +13,18 @@ from .ml_supervised_custom_utils import (
     export_custom_ml_csv,
     custom_evaluation_results,           
     custom_evaluation_progress,
+    processing_status,
     convert_numpy_types          
 )
 from werkzeug.utils import secure_filename
 ml_s_c_bp = Blueprint('ml_s_c', __name__)
 
 UPLOAD_FOLDER = 'uploads'
-processing_status = {}  # Track per-model status
-evaluation_progress = {}
 
 
-@ml_s_c_bp.route('/custom_ml/<model_name>/<subcategory>')
-def custom_ml(model_name, subcategory):
+
+@ml_s_c_bp.route('/custom_evaluate_ml/<model_name>')
+def custom_ml(model_name):
     """Custom ML evaluation page with results display"""
     agentic_request = session.pop('agentic_request', None)
     auto_trigger = agentic_request and agentic_request.get('auto_trigger', False)
@@ -41,8 +42,7 @@ def custom_ml(model_name, subcategory):
             print(f"Found evaluation results for {model_name}: {evaluation_results.keys()}")
         
         return render_template('custom_evaluate_ml.html', 
-                             model_name=model_name,
-                             subcategory=subcategory,
+                             model_name=model_name,                             
                              uploaded_files=uploaded_files,
                              evaluation_results=evaluation_results,
                              auto_trigger=auto_trigger)
@@ -97,6 +97,7 @@ def run_custom_ml_evaluation(model_name):
                     processing_status[f"{model_name}_ml_custom"] = "error"
                 else:
                     print(f"Evaluation successful for {model_name}")
+                    custom_evaluation_results[f"{model_name}_ml"] = result
                     processing_status[f"{model_name}_ml_custom"] = "complete"
                     
             except Exception as e:
@@ -127,35 +128,58 @@ def run_custom_ml_evaluation(model_name):
 
 @ml_s_c_bp.route('/check_custom_ml_status/<model_name>')
 def check_custom_ml_status(model_name):
-    """Check status of custom ML evaluation - FIXED VERSION"""
+    """Check status of custom ML evaluation with robust JSON serialization"""
     try:
+        # 1. Fetch data from global storage
         status = processing_status.get(f"{model_name}_ml_custom", "not_started")
         results = custom_evaluation_results.get(f"{model_name}_ml", {})
         progress = custom_evaluation_progress.get(model_name, {})
 
-        
-        
-        if status == "complete" and results and not results.get('error'):
-            return jsonify(convert_numpy_types({
-                'status': 'complete',
-                'results': results,
-                'progress': progress
-            }))
-        elif status == "error" or results.get('error'):
-            return jsonify(convert_numpy_types({
-                'status': 'error',
-                'results': results,
-                'progress': progress
-            }))
-        else:
-            return jsonify(convert_numpy_types({
-                'status': 'processing',
-                'progress': progress
-            }))
-            
+        print(f"DEBUG: Status Check for {model_name} -> {status}") # Terminal Debug Log
+
+        # 2. Define a robust safe-cleaner function locally to avoid import issues
+        def clean_for_json(obj):
+            if isinstance(obj, dict):
+                return {k: clean_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_for_json(v) for v in obj]
+            elif isinstance(obj, (float, np.floating)):
+                # CRITICAL: Convert NaN/Infinity to None (null in JSON)
+                if np.isnan(obj) or np.isinf(obj):
+                    return None
+                return float(obj)
+            elif isinstance(obj, (int, np.integer)):
+                return int(obj)
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, np.ndarray):
+                return clean_for_json(obj.tolist())
+            return obj
+
+        # 3. Clean the data before sending
+        response_data = {
+            'status': status,
+            'progress': clean_for_json(progress)
+        }
+
+        if status == 'complete':
+            response_data['results'] = clean_for_json(results)
+        elif status == 'error':
+            response_data['results'] = clean_for_json(results)
+            # Ensure error message is present
+            if 'error' not in response_data['results']:
+                 response_data['results']['error'] = "Unknown error occurred during processing"
+
+        # 4. Return JSON
+        return jsonify(response_data)
+
     except Exception as e:
-        print(f"Error checking status for {model_name}: {str(e)}")
-        return jsonify({'status': 'error', 'error': str(e)}), 500
+        print(f"CRITICAL ERROR in status check: {str(e)}")
+        # Return a valid JSON response so UI doesn't freeze, but shows error
+        return jsonify({
+            'status': 'error', 
+            'results': {'error': f"Server serialization error: {str(e)}"}
+        })
 
 
 

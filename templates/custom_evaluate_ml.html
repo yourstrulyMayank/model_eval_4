@@ -656,48 +656,7 @@
     </style>
 </head>
 <body>
-    <header>
-        <img src="/static/infosys.png" alt="Logo">
-        <h1>Custom ML Model Evaluation</h1>
-        <img src="/static/ABCBank.png" alt="Logo">
-    </header>
-    <nav>
-        <a href="/"></a>
-    </nav>
-    <!-- Enhanced Back Button -->
-    <a href="/" class="back-button" title="Back to Dashboard">
-        ←Back
-    </a>
-
-    <div class="container">
-        <div class="card">
-            <h1>Custom ML Evaluation for {{ model_name }}</h1>
-            
-            <!-- Upload Section -->
-            <div class="upload-section" id="upload-section">
-                <h2>📁 Upload Files</h2>
-                <p>Upload your trained model (.pkl/.joblib) and test data (.xlsx/.csv) for evaluation</p>
-                
-                <div class="upload-grid">
-                    <div class="upload-card">
-                        <h3>Model File</h3>
-                        <p>Upload your trained model file (.pkl or .joblib format)</p>
-                        <input type="file" id="model-file" accept=".pkl,.joblib,.model" class="file-input">
-                        <button onclick="uploadModelFile()" class="upload-btn" id="model-upload-btn">Upload Model</button>
-                        <div class="upload-status" id="model-upload-status"></div>
-                    </div>
-                    
-                    <div class="upload-card">
-                        <h3>Test Data</h3>
-                        <p>Upload test data with features and target labels (.xlsx or .csv format)</p>
-                        <input type="file" id="test-file" accept=".xlsx,.xls,.csv" class="file-input">
-                        <button onclick="uploadTestFile()" class="upload-btn" id="test-upload-btn">Upload Test Data</button>
-                        <div class="upload-status" id="test-upload-status"></div>
-                    </div>
-                </div>
-
-                
-            </div>
+    
 
             {% if evaluation_results and not evaluation_results.get('error') %}
                 <div class="redo-section">
