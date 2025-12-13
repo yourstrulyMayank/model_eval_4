@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Evaluation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e6f0ff 0%, #ffffff 100%);
+            min-height: 100vh;
+            color: #333;
+            margin: 0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f7f7f7;
+        }
+        header img {
+            height: 75px;
+        }
+        header h1 {
+            color: #0071e3;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            flex: 1;
+        }
+        nav {
+            width: 100%;
+            text-align: left;
+            padding: 10px 20px;
+            background-color: #005bb5;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        nav a:hover {
+            background-color: #0071e3;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            height: auto;
+        }
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .chat-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .agent-logs {
+            background: #f8f9fa;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .log-entry {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+        .log-fetching {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .log-processing {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .log-success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+        .log-error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+        }
+        .message {
+            margin: 15px 0;
+            animation: fadeIn 0.3s ease;
+        }
+        .message.user {
+            text-align: right;
+        }
+        .message.agent {
+            text-align: left;
+        }
+        .message-bubble {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .message.agent .message-bubble {
+            background: #e6dc89ff;
+            color: #333;
+        }
+        .chat-input-container {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e2e8f0;
+        }
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+        .send-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .monitoring-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .progress-dots {
+            display: inline-block;
+        }
+
+        .progress-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="/static/infosys.png" alt="Logo">
+        <h1>Agentic AI Evaluation</h1>
+        <img src="/static/ABCBank.png" alt="Logo">
+    </header>
+    <nav>
+        <a href="/">← Back to Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>🤖 AI Agent Assistant</h2>
+                
+            </div>
+            
+            <div class="agent-logs" id="agentLogs">
+                <strong>Agent Activity:</strong>
+                <div id="logsContent"></div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+            <div class="message agent">
+            <div class="message-bubble">
+                Hello! I'm your AI evaluation agent. You can ask me to perform evaluations like:
+                <ul style="margin: 10px 0; text-align: left;">
+                    <li>"Perform custom evaluation for Capital Risk model"</li>
+                    <li>"Run standard evaluation on Compliance Assist"</li>
+                    <li>"Evaluate Wealth Assist with custom test cases"</li>
+                </ul>
+                <em style="font-size: 0.9em; color: #666;">I'll open evaluations in a new tab and notify you when complete.</em>
+            </div>
+        </div>
+    </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input type="text" 
+                           id="userInput" 
+                           class="chat-input" 
+                           placeholder="Ask me to evaluate a model..."
+                           onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let evaluationWindow = null;
+    let checkInterval = null;
+    let currentModelType = null;
+    let currentModelName = null;
+
+    function addLog(message, type = 'processing') {
+        const logsContent = document.getElementById('logsContent');
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logsContent.appendChild(logEntry);
+        logsContent.scrollTop = logsContent.scrollHeight;
+    }
+
+    function addMessage(text, sender = 'agent') {
+        const messagesDiv = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        messageDiv.innerHTML = `<div class="message-bubble">${text}</div>`;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        addMessage(message, 'user');
+        input.value = '';
+        
+        sendBtn.disabled = true;
+        
+        if (awaitingSummaryConsent && /^y(es)?$/i.test(message)) {
+            awaitingSummaryConsent = false;
+            await requestSummary();
+            return;
+        }
+        // Check if asking for summary
+        if (message.toLowerCase().includes('summary') || message.toLowerCase().includes('summarize')) {
+            if (currentModelType && currentModelName) {
+                await requestSummary();
+                sendBtn.disabled = false;
+                return;
+            } else {
+                addMessage('No evaluation results available to summarize. Please run an evaluation first.', 'agent');
+                sendBtn.disabled = false;
+                return;
+            }
+        }
+        
+        addLog('Analyzing user request...', 'fetching');
+        
+        try {
+            const response = await fetch('/process-agentic-request', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: message})
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                addLog(data.error, 'error');
+                addMessage(`Error: ${data.error}`, 'agent');
+            } else {
+                addLog(data.log, data.log_type || 'processing');
+                addMessage(data.response, 'agent');
+                
+                // Handle test case generation for ML custom
+                if (data.trigger_testcase_generation) {
+                    await handleTestCaseGeneration(data.model_name);
+                }
+                // Handle ML Standard
+                else if (data.trigger_ml_standard) {
+                    handleMLStandard(data.model_name);
+                }
+                // Handle other redirects
+                else if (data.redirect_url) {
+                    handleRedirect(data.redirect_url, data.model_name);
+                }
+            }
+        } catch (error) {
+            addLog(`Error: ${error.message}`, 'error');
+            addMessage('Sorry, something went wrong. Please try again.', 'agent');
+        }
+        
+        sendBtn.disabled = false;
+    }
+    let awaitingSummaryConsent = false;
+    async function handleTestCaseGeneration(modelName) {
+        addLog('Will generate new test cases first...', 'processing');
+        addMessage('🔄 Generating test cases for ' + modelName + '...', 'agent');
+
+        try {
+            const response = await fetch(`/agentic_generate_testcases/${modelName}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                addLog('Test case generation failed: ' + data.error, 'error');
+                addMessage('❌ Failed to generate test cases. Please try manual upload.', 'agent');
+                return;
+            }
+
+            addLog(`Generated ${data.test_cases_count} test cases`, 'success');
+            addMessage(`✅ Test cases generated for ${modelName}. You can now proceed with custom evaluation. The evaluation page will open in a new tab.`, 'agent');
+
+            // Open the custom evaluation page in a new tab
+            window.open(`/custom_ml/${modelName}/supervised`, '_blank');
+
+            // After a delay, ask if the user wants a summary
+            setTimeout(() => {
+                addMessage('🕒 Would you like me to summarize the results of your custom evaluation?', 'agent');
+                awaitingSummaryConsent = true;
+            }, 10000); // 3 minutes delay (in ms)
+        } catch (error) {
+            addLog('Error generating test cases: ' + error.message, 'error');
+            addMessage('❌ Error generating test cases. Please try again.', 'agent');
+        }
+    }
+
+    function handleMLStandard(modelName) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('ml_s_t_mlflow.evaluate_ml', model_name='capital_risk', subcategory='supervised') }}";
+        form.target = '_blank';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'benchmark';
+        input.value = modelName;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        
+        setTimeout(() => {
+            evaluationWindow = form.submit();
+            document.body.removeChild(form);
+            
+            currentModelType = 'ml_standard';
+            currentModelName = 'capital_risk';
+            
+            addLog('Evaluation opened in new tab', 'success');
+            addMessage('✅ Evaluation started in a new tab.', 'agent');
+            
+            startMonitoring('ml_standard', 'capital_risk');
+        }, 500);
+    }
+
+    function handleRedirect(url, modelName) {
+        setTimeout(() => {
+            evaluationWindow = window.open(url, '_blank');
+            
+            // Determine model type from URL
+            if (url.includes('custom_llm')) {
+                currentModelType = 'llm_custom';
+                currentModelName = modelName;
+            } else if (url.includes('evaluate_llm')) {
+                currentModelType = 'llm_standard';
+                currentModelName = modelName;
+            }
+            
+            addLog('Evaluation opened in new tab', 'success');
+            addMessage('✅ Evaluation opened in a new tab.', 'agent');
+            
+            if (currentModelType) {
+                startMonitoring(currentModelType, currentModelName);
+            }
+        }, 500);
+    }
+
+    function startMonitoring(modelType, modelName) {
+    addMessage('⏳ Monitoring evaluation progress. I\'ll notify you when it completes...', 'agent');
+    if (checkInterval) {
+        clearInterval(checkInterval);
+    }
+    let statusEndpoint = '';
+    if (modelType === 'ml_custom') {
+        statusEndpoint = `/check_custom_ml_status/${modelName}`;
+    } else if (modelType === 'ml_standard') {
+        statusEndpoint = `/api/ml_progress/${modelName}`;
+    } else if (modelType === 'llm_custom') {
+        statusEndpoint = `/check_custom_status/${modelName}`;
+    } else if (modelType === 'llm_standard') {
+        statusEndpoint = `/check_status/${modelName}`;
+    }
+    let checkCount = 0;
+    const maxChecks = 120;
+    checkInterval = setInterval(async () => {
+        checkCount++;
+        if (checkCount > maxChecks) {
+            clearInterval(checkInterval);
+            addLog('Evaluation monitoring timeout', 'error');
+            addMessage('⚠️ Evaluation is taking longer than expected. Please check the evaluation tab.', 'agent');
+            return;
+        }
+        try {
+            const response = await fetch(statusEndpoint);
+            const data = await response.json();
+            // For ML standard, use status field
+            if (modelType === 'ml_standard') {
+                if (data.status === 'complete') {
+                    clearInterval(checkInterval);
+                    addLog('Evaluation completed successfully', 'success');
+                    addMessage('✅ Evaluation completed! Would you like me to summarize the results?', 'agent');
+                    awaitingSummaryConsent = true;
+                } else if (data.status === 'error') {
+                    clearInterval(checkInterval);
+                    addLog('Evaluation failed', 'error');
+                    addMessage('❌ Evaluation encountered an error. Please check the evaluation tab.', 'agent');
+                }
+            } else {
+                if (data.status === 'complete') {
+                    clearInterval(checkInterval);
+                    addLog('Evaluation completed successfully', 'success');
+                    addMessage('✅ Evaluation completed! Would you like me to summarize the results?', 'agent');
+                } else if (data.status === 'error') {
+                    clearInterval(checkInterval);
+                    addLog('Evaluation failed', 'error');
+                    addMessage('❌ Evaluation encountered an error. Please check the evaluation tab.', 'agent');
+                }
+            }
+        } catch (error) {
+            console.error('Status check error:', error);
+        }
+    }, 5000);
+}
+
+    async function requestSummary() {
+        if (!currentModelType || !currentModelName) {
+            addMessage('No evaluation results available to summarize.', 'agent');
+            return;
+        }
+        
+        addLog('Generating results summary...', 'processing');
+        addMessage('🔄 Analyzing evaluation results...', 'agent');
+        
+        try {
+            const response = await fetch(`/agentic_summarize_results/${currentModelType}/${currentModelName}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                addLog('Summary generation failed', 'error');
+                addMessage('❌ Could not generate summary. ' + data.error, 'agent');
+            } else {
+                addLog('Summary generated successfully', 'success');
+                addMessage(`<strong>📊 Evaluation Summary:</strong><br><br>${data.summary}`, 'agent');
+            }
+        } catch (error) {
+            addLog('Error generating summary: ' + error.message, 'error');
+            addMessage('❌ Error generating summary. Please try again.', 'agent');
+        }
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+</script>
+</body>
+</html>

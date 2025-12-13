@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Case Generation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7f7f7;
+            min-height: 100vh;
+            color: #333;
+            margin: 0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f7f7f7;
+        }
+        header img {
+            height: 75px;
+            transition: transform 0.3s ease;
+        }
+        header img:hover {
+            transform: scale(1.05);
+        }
+        header h1 {
+            color: #0071e3;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            flex: 1;
+        }
+        nav {
+            width: 100%;
+            text-align: left;
+            padding: 10px 20px;
+            background-color: #005bb5;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            margin-right: 20px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        nav a:hover {
+            background-color: #0071e3;
+        }
+        .back-button {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .main-container {
+            display: flex;
+            padding: 30px;
+            gap: 30px;
+            height: 100vh;
+            width: 95%;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: auto;
+            background: linear-gradient(135deg, #f3e5f5 0%, #eeb0c2ff 100%);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            height: auto;
+            min-height: 90vh;
+            padding-bottom: 2rem;
+            box-sizing: border-box;
+            box-shadow: 0 4px 16px rgba(233, 30, 99, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            
+        }
+
+        .left-panel h2 {
+            color: #36373b;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .dropdown-section {
+            margin-bottom: 30px;
+        }
+
+        .dropdown-section label {
+            display: block;
+            color: #36373b;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .model-dropdown {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 16px;
+            color: #2d3748;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 2px 6px rgba(44,62,80,0.1);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .model-dropdown:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .upload-section {
+            margin-top: 30px;
+        }
+
+        .upload-section h3 {
+            color: #36373b;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .upload-btn {
+            background: rgba(37, 131, 34, 0.85);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.12);
+        }
+
+        .upload-btn:hover {
+            background: #764ba2;
+            transform: scale(1.02);
+            box-shadow: 0 4px 16px rgba(118,75,162,0.18);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #4a5568;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #e6dadaff 0%, #365874ff 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(33, 150, 243, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            display: flex;
+            flex-direction: column;
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            min-height: 80vh;
+            overflow: hidden;
+
+        }
+
+        .chat-header {
+            color: #36373b;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 16px;
+            max-width: 70%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .assistant-message {
+            background: linear-gradient(135deg, #ffecb3 0%, #ffe082 100%);
+            color: #3e2723;
+            align-self: flex-start;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 16px;
+            padding: 10px 15px;
+            animation: fadeIn 0.3s ease;
+            max-width: 90%;          
+            width: 80%;
+            overflow-y: auto;
+            overflow-x: auto;
+            
+        }
+
+        .assistant-message.has-table {
+            display: block;
+            overflow-x: auto;          /* horizontal scroll if needed */
+            overflow-y: auto;          /* vertical scroll if content too tall */
+            max-height: 500px;         /* decent fixed vertical height */
+            width: 100%;               /* take entire width of chat area */
+            border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+        }
+
+        /* Table styling inside assistant message */
+        .assistant-message.has-table table {
+            border-collapse: collapse;
+            width: max-content;        /* don’t force table to shrink */
+            min-width: 100%;           /* ensure fills available width first */
+        }
+
+        .assistant-message.has-table th,
+        .assistant-message.has-table td {
+            white-space: nowrap;
+            padding: 12px;
+        }
+
+        .assistant-message.has-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .assistant-message.has-table td {
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .assistant-message.has-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(241, 240, 212, 0.9);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 16px;
+            color: #2d3748;
+            outline: none;
+            box-shadow: 0 2px 6px rgba(44,62,80,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .send-btn {
+            background: rgba(71, 138, 8, 0.85);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.12);
+        }
+
+        .send-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(118,75,162,0.18);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+            header {
+                flex-direction: column;
+                padding: 10px 5px;
+            }
+            header h1 {
+                font-size: 1.5rem;
+            }
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .left-panel {
+                width: 100%;
+            }
+            .message {
+                max-width: 85%;
+            }
+        }
+        .test-cases-table {
+            width: max-content;  /* Table takes only the space it needs */
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: visible;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: block;  /* Make it behave as block for scrolling */
+        }
+
+        .test-cases-table th,
+        .test-cases-table td {
+            white-space: nowrap;  /* Prevent text wrapping in cells */
+            padding: 12px;
+        }
+
+        .test-cases-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .test-cases-table td {
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .test-cases-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .test-cases-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #005bb5;
+            transform: scale(1.05);
+        }
+
+        
+    </style>
+</head>
+<body>
+    <header>
+        <img src="/static/infosys.png" alt="Logo">
+        <h1>Test Case Generation</h1>
+        <img src="/static/ABCBank.png" alt="Logo">
+    </header>
+    <nav>
+        <a href="/" class="back-button" title="Back to Dashboard">← Back to Solutions Dashboard</a>
+    </nav>
+
+    <div class="main-container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <h2>Configuration</h2>
+            
+            <div class="dropdown-section">
+                <label for="model-select" >Select an Existing Model:</label>
+                <select id="model-select" class="model-dropdown">
+                    <option value="" selected disabled>Choose a model</option>
+                    <option value="Compliance Assist">Compliance Assist</option>
+                    <option value="Wealth Assist">Wealth Assist</option>
+                    <option value="Capital Risk">Capital Risk</option>
+                </select>
+            </div>
+
+            <div class="upload-section">
+                <h3>Upload Artifacts For a New Model</h3>
+                <p style="font-size: 14px; color: #4a5568; margin-bottom: 15px; text-align: center;">
+                    Upload files for a new model
+                </p>
+                
+                <input type="file" id="model-card-input" class="file-input" accept=".pdf">
+                <button class="upload-btn" onclick="document.getElementById('model-card-input').click()">
+                    Choose a Model Card
+                </button>
+                <div class="file-name" id="model-card-name">No file selected</div>
+                
+                <div style="margin-top: 20px;">
+                    <input type="file" id="test-format-input" class="file-input" accept=".csv,.xlsx,.xls">
+                    <button class="upload-btn" onclick="document.getElementById('test-format-input').click()">
+                        Choose a Sample Test Format
+                    </button>
+                    <div class="file-name" id="test-format-name">No file selected</div>
+                </div>
+
+                <button class="upload-btn" id="upload-new-model-btn" onclick="uploadNewModel()" style="margin-top: 25px; background: #0071e3;">
+                    Upload New Model's Files
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel - Chat -->
+        <div class="right-panel">
+            <div class="chat-header">Test Case Generation Assistant</div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant-message">
+                    Hello! I'm your test case generation assistant. Select a model from the dropdown and ask me to generate test cases for it.
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    class="chat-input" 
+                    placeholder="Ask me to generate test cases..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const modelSelect = document.getElementById('model-select');
+        const modelCardInput = document.getElementById('model-card-input');
+        const testFormatInput = document.getElementById('test-format-input');
+        const modelCardName = document.getElementById('model-card-name');
+        const testFormatName = document.getElementById('test-format-name');
+        let currentTableData = [];
+        let currentColumnOrder = [];
+
+        modelCardInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                modelCardName.textContent = e.target.files[0].name;
+            } else {
+                modelCardName.textContent = 'No file selected';
+            }
+        });
+
+        testFormatInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                testFormatName.textContent = e.target.files[0].name;
+            } else {
+                testFormatName.textContent = 'No file selected';
+            }
+        });
+
+        async function uploadNewModel() {
+            const modelCardFile = modelCardInput.files[0];
+            const testFormatFile = testFormatInput.files[0];
+
+            if (!modelCardFile || !testFormatFile) {
+                alert('Please select both a model card (PDF) and a test format file (CSV/XLSX)!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('model_card', modelCardFile);
+            formData.append('test_format', testFormatFile);
+
+            const uploadBtn = document.getElementById('upload-new-model-btn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch("{{ url_for('tcg.upload_new_model') }}", {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Model uploaded successfully! Model name: ' + data.model_name);
+                    
+                    // Add new model to dropdown
+                    const option = document.createElement('option');
+                    option.value = data.model_name;
+                    option.textContent = data.model_name;
+                    modelSelect.appendChild(option);
+                    modelSelect.value = data.model_name;
+
+                    // Reset file inputs
+                    modelCardInput.value = '';
+                    testFormatInput.value = '';
+                    modelCardName.textContent = 'No file selected';
+                    testFormatName.textContent = 'No file selected';
+
+                    // Add message to chat
+                    addMessage(`New model "${data.model_name}" has been added and selected. You can now generate test cases for it!`, false);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error uploading model: ' + error.message);
+                console.error('Error:', error);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload New Model';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function addMessage(text, isUser, tableData = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
+            
+            if (tableData && tableData.length > 0) {
+                messageDiv.classList.add('has-table');
+                
+                // Add text before table
+                const textDiv = document.createElement('div');
+                textDiv.textContent = text;
+                textDiv.style.marginBottom = '15px';
+                messageDiv.appendChild(textDiv);
+                
+                // Create table
+                const table = document.createElement('table');
+                table.className = 'test-cases-table';
+                
+                // Create header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                Object.keys(tableData[0]).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Create body
+                const tbody = document.createElement('tbody');
+                tableData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    Object.values(row).forEach(value => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                
+                messageDiv.appendChild(table);
+                
+                // Add action buttons
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'table-actions';
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'action-btn';
+                copyBtn.textContent = 'Copy Table';
+                copyBtn.onclick = () => copyTableToClipboard(tableData);
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'action-btn';
+                downloadBtn.textContent = 'Download CSV';
+                downloadBtn.onclick = () => downloadTableAsCSV(tableData);
+                
+                actionsDiv.appendChild(copyBtn);
+                actionsDiv.appendChild(downloadBtn);
+                messageDiv.appendChild(actionsDiv);
+            } else {
+                messageDiv.textContent = text;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function copyTableToClipboard(tableData) {
+            const headers = Object.keys(tableData[0]).join('\t');
+            const rows = tableData.map(row => Object.values(row).join('\t')).join('\n');
+            const tableText = headers + '\n' + rows;
+            
+            navigator.clipboard.writeText(tableText).then(() => {
+                alert('Table copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        async function downloadTableAsCSV(tableData) {
+            const selectedModel = modelSelect.value;
+            
+            try {
+                const response = await fetch("{{ url_for('tcg.download_test_cases') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        test_cases: tableData,
+                        model_name: selectedModel,
+                        column_order: currentColumnOrder
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${selectedModel}_test_cases.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Failed to download test cases');
+            }
+        }
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            const selectedModel = modelSelect.value;
+
+            if (!message) return;
+
+            if (!selectedModel) {
+                alert('Please select a model first!');
+                return;
+            }
+
+            // Add user message
+            addMessage(message, true);
+            chatInput.value = '';
+
+            // Disable send button
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span>';
+
+             try {
+                const response = await fetch("{{ url_for('tcg.generate_test_cases') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        model: selectedModel
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.response) {
+                    // Check if response includes table data
+                    if (data.table_data && data.table_data.length > 0) {
+                        currentTableData = data.table_data;  // ADD THIS LINE
+                        currentColumnOrder = data.columns || Object.keys(data.table_data[0] || {});
+                        addMessage(data.response, false, data.table_data);
+                    } else {
+                        addMessage(data.response, false);
+                    }
+                } else if (data.error) {
+                    addMessage('Error: ' + data.error, false);
+                }
+            } catch (error) {
+                addMessage('Error: Failed to generate test cases. Please try again.', false);
+                console.error('Error:', error);
+            } finally {
+                // Re-enable send button
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+            }
+        }
+         const observer = new MutationObserver(() => {
+                document.querySelectorAll('.assistant-message').forEach(msg => {
+                    if (msg.querySelector('table') && !msg.classList.contains('has-table')) {
+                        msg.classList.add('has-table');
+                    }
+                });
+            });
+
+            observer.observe(document.getElementById('chat-messages'), { childList: true, subtree: true });
+
+        
+    </script>
+</body>
+</html>

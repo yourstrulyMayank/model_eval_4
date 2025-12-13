@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Evaluator</title>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f7f7f7;
+        min-height: 100vh;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+        background: #f7f7f7;
+    }
+    header img {
+        height: 75px;
+        transition: transform 0.3s ease;
+    }
+    header img:hover {
+        transform: scale(1.05);
+    }
+    header h1 {
+        color: #0071e3;
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        flex: 1;
+    }
+    nav {
+        width: 100%;
+        text-align: left;
+        padding: 10px 20px;
+        background-color: #005bb5;
+    }
+    nav a {
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        margin-right: 20px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: background 0.2s;
+    }
+    nav a.greyed {
+        color: #ccc;
+        pointer-events: none;
+    }
+    nav a:hover:not(.greyed) {
+        background-color: #0071e3;
+    }
+    .back-button {
+        font-weight: 600;
+        font-size: 16px;
+    }
+    @media (max-width: 700px) {
+        header {
+            flex-direction: column;
+            padding: 10px 5px;
+        }
+        header h1 {
+            font-size: 1.5rem;
+        }
+        nav {
+            padding: 8px 5px;
+        }
+    }
+
+    .agentic-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        padding: 40px 60px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .agentic-card {
+        background: linear-gradient(180deg, #f5a236ff 0%, #182848 100%);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 4px 16px rgba(31, 38, 135, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .agentic-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.3);
+    }
+
+    .agentic-card h3 {
+        color: #ffffffff;
+        font-size: 24px;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .agentic-card p {
+        color: #ffffffff;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .agentic-card .card-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 700px) {
+        .agentic-grid {
+            grid-template-columns: 1fr;
+            padding: 20px;
+        }
+    }
+    
+    .agentic-dropdown {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 16px;
+        color: #2d3748;
+        cursor: pointer;
+        outline: none;
+        margin-top: 15px;
+        box-shadow: 0 2px 6px rgba(44,62,80,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .agentic-dropdown:hover {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .agentic-card {
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <img src="/static/infosys.png" alt="Logo">
+        <h1>Model Evaluation Dashboard</h1>
+        <img src="/static/ABCBank.png" alt="Logo">
+    </header>
+    <nav>
+        <a href="/" class="back-button" title="Back to Dashboard">← Back to Solutions Dashboard</a>
+    </nav>
+
+    <div class="agentic-grid">
+        <div class="agentic-card" onclick="navigateToTestCaseGeneration()">
+            <div class="card-icon">🌐</div>
+            <h3>Automatic Scope Validation & Test Case Generation</h3>
+            <p>Generate custom test-cases for model evaluation</p>
+        </div>
+
+        <div class="agentic-card" onclick="handleModelSelection(event)">
+            <div class="card-icon">📊</div>
+            <h3>Model Evaluation Hub</h3>
+            <p>Standard and Custom Evaluation for all models</p>
+            <select class="agentic-dropdown" id="model-hub-dropdown" onclick="event.stopPropagation()">
+                <option value="" selected disabled>Select a Model</option>
+                <option value="Compliance Model" data-type="llm">Compliance Model (LLM)</option>
+                <option value="Wealth Advisory Model" data-type="llm">Wealth Advisory Model (LLM)</option>
+                <option value="Capital Risk" data-type="ml">Capital Risk Model (ML Regression)</option>
+                <option value="FRTB-SA" data-type="risk">FRTB-SA (Risk)</option>
+            </select>
+        </div>
+
+        <div class="agentic-card" onclick="navigateToAgentic()">
+            <div class="card-icon">🤖</div>
+            <h3>Agentic Evaluation</h3>
+            <p>Advanced agentic AI evaluation workflows</p>
+        </div>
+    </div>
+
+    <script>
+        function navigateToTestCaseGeneration() {
+            window.location.href = "/test-case-generation";
+        }
+
+        function navigateToAgentic() {
+            window.location.href = "/agentic-evaluation";
+        }
+
+        function handleModelSelection(event) {
+            const dropdown = document.getElementById('model-hub-dropdown');
+            
+            if (!dropdown.value) {
+                alert('Please select a model first');
+                return;
+            }
+
+            const selectedOption = dropdown.options[dropdown.selectedIndex];
+            const modelName = dropdown.value;
+            const modelType = selectedOption.getAttribute('data-type');
+
+            // Store model data in sessionStorage
+            const modelData = {
+                name: modelName,
+                type: modelType,
+                timestamp: new Date().toISOString()
+            };
+            sessionStorage.setItem('selectedModel', JSON.stringify(modelData));
+
+            // Redirect to model evaluation page
+            window.location.href = `/model-evaluation?model=${encodeURIComponent(modelName)}&type=${modelType}`;
+        }
+
+        // Prevent dropdown selection from triggering card click
+        document.getElementById('model-hub-dropdown').addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        document.getElementById('model-hub-dropdown').addEventListener('change', function(e) {
+            e.stopPropagation();
+        });
+    </script>
+</body>
+</html>
