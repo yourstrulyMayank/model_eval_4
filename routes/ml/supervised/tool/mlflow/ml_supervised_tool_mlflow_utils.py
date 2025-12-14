@@ -36,7 +36,6 @@ ml_evaluation_progress = {}
 ml_evaluation_results = {}
 
 def update_progress(model_name, current_task, progress_percent):
-    """Update progress for a specific model evaluation."""
     ml_evaluation_progress[model_name] = {
         "current_task": current_task,
         "progress_percent": progress_percent,
@@ -44,7 +43,6 @@ def update_progress(model_name, current_task, progress_percent):
     }
 
 def get_ml_progress(model_name):
-    """Get current progress for a model evaluation."""
     return ml_evaluation_progress.get(model_name, {
         "current_task": "Not started",
         "progress_percent": 0,
@@ -52,14 +50,12 @@ def get_ml_progress(model_name):
     })
 
 def clear_ml_progress(model_name):
-    """Clear progress for a specific model."""
     if model_name in ml_evaluation_progress:
         del ml_evaluation_progress[model_name]
     if model_name in ml_evaluation_results:
         del ml_evaluation_results[model_name]
 
 def load_model(model_path):
-    """Load pickle model."""
     try:
         with open(model_path, 'rb') as f:
             model = joblib.load(f)
@@ -67,56 +63,28 @@ def load_model(model_path):
     except Exception as e:
         print(f"Error loading model: {e}")
         return None
+
+
 def detect_problem_type(model):
     model_type = type(model).__name__.lower()
-    # Check regression keywords first!
     regression_keywords = ['regression', 'regressor', 'linear', 'ridge', 'lasso', 'elastic']
     classification_keywords = ['classifier', 'logistic', 'svm', 'randomforest', 'decisiontree', 
                                'gradient', 'xgb', 'lgb', 'naive', 'knn', 'ada', 'extra', 'voting']
     for keyword in regression_keywords:
         if keyword in model_type:
-            print(f"Detected regression model: {model_type}")
             return 'regression'
     for keyword in classification_keywords:
         if keyword in model_type:
-            print(f"Detected classification model: {model_type}")
             return 'classification'
-    print('--------------------------------------------')
-    # Default to regression if uncertain
     return 'regression'
 
-# def detect_problem_type(model):
-#     """Detect if it's classification or regression based on model type."""
-#     model_type = type(model).__name__.lower()
-    
-#     # Common classification models
-#     classification_keywords = ['classifier', 'logistic', 'svm', 'randomforest', 'decisiontree', 
-#                              'gradient', 'xgb', 'lgb', 'naive', 'knn', 'ada', 'extra', 'voting']
-    
-#     # Common regression models  
-#     regression_keywords = ['regression', 'regressor', 'linear', 'ridge', 'lasso', 'elastic']
-    
-#     for keyword in classification_keywords:
-#         if keyword in model_type:
-#             print(f"Detected classification model: {model_type}")
-#             return 'classification'
-    
-#     for keyword in regression_keywords:
-#         if keyword in model_type:
-#             print(f"Detected regression model: {model_type}")
-#             return 'regression'
-#     print('--------------------------------------------')
-#     # Default to regression if uncertain
-#     return 'regression'
 
 def round_if_needed(preds, model_name):
-    """Round predictions if needed based on model name."""
     if any(keyword in model_name.lower() for keyword in ['rating', 'ordinal', 'score', 'rank']):
         return np.clip(np.round(preds).astype(int), 0, 10)
     return preds
 
 def get_model_info(model):
-    """Extract comprehensive model information."""
     info = {
         'model_type': type(model).__name__,
         'model_params': getattr(model, 'get_params', lambda: {})(),
@@ -124,236 +92,128 @@ def get_model_info(model):
         'has_feature_importance': hasattr(model, 'feature_importances_'),
         'has_predict_proba': hasattr(model, 'predict_proba'),
         'has_coefficients': hasattr(model, 'coef_'),
-        'has_intercept': hasattr(model, 'intercept_'),
         'training_score': None
     }
-    
-    # Try to get feature count from model
     if hasattr(model, 'n_features_in_'):
         info['feature_count'] = model.n_features_in_
     elif hasattr(model, 'coef_'):
-        if hasattr(model.coef_, 'shape'):
-            info['feature_count'] = model.coef_.shape[-1] if model.coef_.ndim > 1 else len(model.coef_)
-    
-    # Get training score if available
+        info['feature_count'] = model.coef_.shape[-1] if model.coef_.ndim > 1 else len(model.coef_)
     if hasattr(model, 'score_'):
         info['training_score'] = model.score_
-    print(f"Model Info: {info}")
     return info
 
 def cleanup_evaluation_resources(model_name):
-    """Clean up all resources after evaluation."""
     try:
         import matplotlib.pyplot as plt
         plt.close('all')
-        
-        # Clear any cached data
         import gc
         gc.collect()
-        
-        print(f"Cleaned up resources for {model_name}")
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
 
 def calculate_detailed_metrics(y_true, y_pred, problem_type, model=None, X_test=None):
-    """Calculate comprehensive evaluation metrics."""
     metrics = {}
-    
     if problem_type == 'regression':
-        # Basic regression metrics
         metrics['mae'] = mean_absolute_error(y_true, y_pred)
         metrics['mse'] = mean_squared_error(y_true, y_pred)
         metrics['rmse'] = np.sqrt(metrics['mse'])
         metrics['r2'] = r2_score(y_true, y_pred)
-        
-        # Additional regression metrics
         try:
             metrics['mape'] = mean_absolute_percentage_error(y_true, y_pred)
         except:
             metrics['mape'] = None
-        
         metrics['max_error'] = np.max(np.abs(y_true - y_pred))
         metrics['mean_error'] = np.mean(y_true - y_pred)
-        metrics['std_error'] = np.std(y_true - y_pred)
-        
-        # Statistical tests
-        residuals = y_true - y_pred
-        _, p_value = stats.normaltest(residuals)
-        metrics['residuals_normality_p'] = p_value
-        
-        # Explained variance
-        metrics['explained_variance'] = 1 - (np.var(residuals) / np.var(y_true))
-        
-    else:  # classification
-        # Basic classification metrics
+    else:
         metrics['accuracy'] = accuracy_score(y_true, y_pred)
-        metrics['precision_macro'] = precision_score(y_true, y_pred, average='macro', zero_division=0)
         metrics['precision_weighted'] = precision_score(y_true, y_pred, average='weighted', zero_division=0)
-        metrics['recall_macro'] = recall_score(y_true, y_pred, average='macro', zero_division=0)
         metrics['recall_weighted'] = recall_score(y_true, y_pred, average='weighted', zero_division=0)
-        metrics['f1_macro'] = f1_score(y_true, y_pred, average='macro', zero_division=0)
         metrics['f1_weighted'] = f1_score(y_true, y_pred, average='weighted', zero_division=0)
         
-        # Per-class metrics
         unique_classes = np.unique(y_true)
-        if len(unique_classes) <= 10:  # Only for reasonable number of classes
-            class_report = classification_report(y_true, y_pred, output_dict=True)
-            for class_name in [str(c) for c in unique_classes]:
-                if class_name in class_report:
-                    metrics[f'precision_class_{class_name}'] = class_report[class_name]['precision']
-                    metrics[f'recall_class_{class_name}'] = class_report[class_name]['recall']
-                    metrics[f'f1_class_{class_name}'] = class_report[class_name]['f1-score']
-        
-        # ROC AUC for binary classification
         if len(unique_classes) == 2 and model is not None and hasattr(model, 'predict_proba') and X_test is not None:
             try:
                 y_prob = model.predict_proba(X_test)[:, 1]
                 metrics['roc_auc'] = roc_auc_score(y_true, y_prob)
-            except Exception as e:
-                print(f"Could not calculate ROC AUC: {e}")
+            except Exception:
                 metrics['roc_auc'] = None
-        
-        # Confusion matrix stats
-        cm = confusion_matrix(y_true, y_pred)
-        if len(unique_classes) == 2:
-            tn, fp, fn, tp = cm.ravel()
-            metrics['true_negatives'] = int(tn)
-            metrics['false_positives'] = int(fp)
-            metrics['false_negatives'] = int(fn)
-            metrics['true_positives'] = int(tp)
-            metrics['specificity'] = tn / (tn + fp) if (tn + fp) > 0 else 0
-            metrics['sensitivity'] = tp / (tp + fn) if (tp + fn) > 0 else 0
-    
     return metrics
 
-def run_ml_evaluation(model_name, model_path, dataset_path):
+def calculate_data_validation_stats(df):
+    """Calculate validation stats for the dataset."""
+    stats = {
+        'total_records': len(df),
+        'missing_values': round(df.isnull().sum().sum() / (df.shape[0] * df.shape[1]) * 100, 2),
+        'duplicate_records': round(df.duplicated().sum() / len(df) * 100, 2),
+        'data_completeness': f"{round((1 - df.isnull().sum().sum() / (df.shape[0] * df.shape[1])) * 100, 1)}%",
+        'feature_count': df.shape[1]
+    }
+    # Simple outlier detection (Z-score > 3) for numerical cols
+    try:
+        numeric_df = df.select_dtypes(include=[np.number])
+        z_scores = np.abs(stats.zscore(numeric_df))
+        outliers = (z_scores > 3).sum().sum()
+        stats['outliers_detected'] = round(outliers / (df.shape[0] * df.shape[1]) * 100, 2)
+    except:
+        stats['outliers_detected'] = 0
+    
+    return stats
+
+def run_ml_evaluation(model_name, model_path, dataset_path, new_version=False):
     """Run comprehensive ML model evaluation using MLflow."""
     try:
-        update_progress(model_name, "Initializing MLflow...", 5)
-        
-        # Set up MLflow
+        update_progress(model_name, "Initializing...", 5)
         mlflow.set_experiment(f"ML_Evaluation_{model_name}")
         
-        with mlflow.start_run(run_name=f"{model_name}_evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-            
+        with mlflow.start_run(run_name=f"{model_name}_evaluation"):
             update_progress(model_name, "Loading model...", 15)
-            
-            # Load model directly from the provided path
             model = load_model(model_path)
-            if model is None:
-                raise Exception("Failed to load model")
+            if model is None: raise Exception("Failed to load model")
             
             update_progress(model_name, "Loading test data...", 25)
-            
-            # Load and validate test data
-            if not os.path.exists(dataset_path):
-                raise Exception(f"Test dataset not found: {dataset_path}")
+            if not os.path.exists(dataset_path): raise Exception(f"Test dataset not found: {dataset_path}")
             
             df = pd.read_csv(dataset_path)
-            print(f"Loaded dataset with {len(df)} samples and {len(df.columns)} features")
+            # Calculate validation stats
+            data_stats = calculate_data_validation_stats(df)
+            
             if 'target' not in df.columns:
-                # If no 'target' column, assume last column is target
                 target_col = df.columns[-1]
                 df = df.rename(columns={target_col: 'target'})
-                print(f"No 'target' column found, using '{target_col}' as target")
             
             X_test = df.drop(columns=['target'])
             y_test = df['target'].values
             
             update_progress(model_name, "Analyzing model...", 35)
-            # Get model information
             model_info = get_model_info(model)
             problem_type = detect_problem_type(model)
             
-            # Log model info to MLflow
-            mlflow.log_param("model_type", model_info['model_type'])
-            mlflow.log_param("problem_type", problem_type)
-            mlflow.log_param("feature_count", model_info['feature_count'])
-            mlflow.log_param("has_feature_importance", model_info['has_feature_importance'])
-            mlflow.log_param("has_predict_proba", model_info['has_predict_proba'])
-            mlflow.log_param("has_coefficients", model_info['has_coefficients'])
-            
-            # Log model parameters
-            for param_name, param_value in model_info['model_params'].items():
-                try:
-                    print(f"Logging parameter: {param_name} = {param_value}")
-                    if isinstance(param_value, (int, float, str, bool)):
-                        mlflow.log_param(f"model_{param_name}", param_value)
-                except:
-                    pass  # Skip parameters that can't be logged
-            
             update_progress(model_name, "Making predictions...", 45)
-            
-            # Make predictions
             y_pred = model.predict(X_test)
-            
-            # Round predictions if needed (for rating/ordinal models)
             y_pred = round_if_needed(y_pred, model_name)
             
             update_progress(model_name, "Calculating metrics...", 55)
-            
-            # Calculate comprehensive metrics
             metrics = calculate_detailed_metrics(y_test, y_pred, problem_type, model, X_test)
-            print(f"Calculated metrics: {metrics}")
-            # Log metrics to MLflow
-            for metric_name, metric_value in metrics.items():
-                if metric_value is not None:
-                    try:
-                        mlflow.log_metric(metric_name, metric_value)
-                    except (TypeError, ValueError):
-                        pass  # Skip non-numeric metrics
             
             update_progress(model_name, "Generating visualizations...", 70)
-            
-            # Create plots directories
             plots_dir = f"static/plots/{model_name}"
             os.makedirs(plots_dir, exist_ok=True)
             
-            # Generate model summary plots
             summary_plots = generate_model_summary_plots(model_name, model, model_info)
-            
-            # Generate evaluation plots based on problem type
             if problem_type == 'regression':
                 eval_plots = create_regression_plots(model_name, y_test, y_pred, plots_dir)
             else:
                 eval_plots = create_classification_plots(model_name, model, X_test, y_test, y_pred, plots_dir)
             
             plt.close('all')
-            # Combine all plots
             all_plots = {**summary_plots, **eval_plots}
             
-            update_progress(model_name, "Logging artifacts...", 85)
-            
-            # Log model
-            mlflow.sklearn.log_model(model, "model")
-            
-            # Log plots as artifacts
-            for plot_name, plot_path in all_plots.items():
-                # Don't modify the path if it's already correct
-                if os.path.exists(plot_path):
-                    mlflow.log_artifact(plot_path, "plots")
-                else:
-                    # Try with static prefix
-                    actual_path = f"static/{plot_path}" if not plot_path.startswith("static/") else plot_path
-                    if os.path.exists(actual_path):
-                        mlflow.log_artifact(actual_path, "plots")
-            
-            # Save predictions and actual values
-            results_df = pd.DataFrame({
-                'actual': y_test,
-                'predicted': y_pred,
-                'residuals': y_test - y_pred if problem_type == 'regression' else None
-            })
-            print(f"Saving predictions to {plots_dir}/predictions.csv")
-            print(f'results_df: {results_df.head()}')
+            # Save predictions
+            results_df = pd.DataFrame({'actual': y_test, 'predicted': y_pred})
             results_path = f"{plots_dir}/predictions.csv"
             results_df.to_csv(results_path, index=False)
-            mlflow.log_artifact(results_path, "data")
             
-            update_progress(model_name, "Finalizing results...", 95)
-            
-            # Prepare final results
             results = {
                 'model_name': model_name,
                 'timestamp': datetime.now().isoformat(),
@@ -365,49 +225,30 @@ def run_ml_evaluation(model_name, model_path, dataset_path):
                 'model_path': model_path,
                 'dataset_path': dataset_path,
                 'num_test_samples': len(y_test),
-                'num_features': X_test.shape[1]
+                'num_features': X_test.shape[1],
+                'data_validation': data_stats
             }
             
-            # Store results
             ml_evaluation_results[model_name] = results
-            update_model_details_json(model_name, results)
-            update_progress(model_name, "Evaluation completed!", 100)
             
+            # Update details.json
+            update_model_details_json(model_name, results, new_version=new_version)
+            
+            update_progress(model_name, "Evaluation completed!", 100)
             return results
             
     except Exception as e:
         error_msg = str(e)
         update_progress(model_name, f"Error: {error_msg}", 0)
-        
-        # Store error results with proper structure
-        error_results = {
-            'model_name': model_name,
-            'timestamp': datetime.now().isoformat(),
-            'error': error_msg,
-            'model_info': {  # Provide default model_info structure
-                'model_type': 'Unknown',
-                'has_feature_importance': False,
-                'has_predict_proba': False,
-                'has_coefficients': False,
-                'feature_count': None,
-                'model_params': {}
-            },
-            'problem_type': 'unknown',
-            'metrics': {},
-            'plots': {}
-        }
-        ml_evaluation_results[model_name] = error_results
         raise e
     finally:
-        # Always clean up resources
         cleanup_evaluation_resources(model_name)
 
+
 def get_ml_results(model_name):
-    """Get evaluation results for a specific model."""
     return ml_evaluation_results.get(model_name, {})
 
 def list_available_results():
-    """List all available evaluation results."""
     return list(ml_evaluation_results.keys())
 
 def cleanup_ml_resources(model_name=None):
@@ -429,22 +270,13 @@ def cleanup_ml_resources(model_name=None):
 
 
 def convert_numpy_types(obj):
-    """Recursively convert numpy types to native Python types for JSON serialization."""
     import numpy as np
-    if isinstance(obj, dict):
-        return {k: convert_numpy_types(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_numpy_types(v) for v in obj]
-    elif isinstance(obj, np.integer):
-        return int(obj)
-    elif isinstance(obj, np.floating):
-        return float(obj)
-    elif isinstance(obj, np.bool_):
-        return bool(obj)
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    else:
-        return obj
+    if isinstance(obj, dict): return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list): return [convert_numpy_types(v) for v in obj]
+    elif isinstance(obj, np.integer): return int(obj)
+    elif isinstance(obj, np.floating): return float(obj)
+    elif isinstance(obj, np.ndarray): return obj.tolist()
+    return obj
 
 
 def export_results_to_json(model_name, output_path=None):
@@ -547,31 +379,12 @@ def compare_models(model_names, metric='accuracy'):
 #         sys.exit(1)
 
 def run_ml_evaluation_wrapper(model_name, model_file_path, test_csv_path, benchmark):
-    """Wrapper function to run ML evaluation in background thread."""
     try:
-        # Ensure matplotlib uses non-GUI backend in thread
         import matplotlib
         matplotlib.use('Agg')
-        
-        print(f"Starting ML evaluation for {model_name}")
-        print(f"Model file: {model_file_path}")
-        print(f"Test data: {test_csv_path}")
-        
-        # Run the evaluation
-        results = run_ml_evaluation(model_name, model_file_path, test_csv_path)
-        
-        print(f"ML evaluation completed for {model_name}")
-        
-        # Clean up matplotlib resources
-        import matplotlib.pyplot as plt
-        plt.close('all')
-        
+        run_ml_evaluation(model_name, model_file_path, test_csv_path, new_version=False)
     except Exception as e:
         print(f"Error in ML evaluation thread: {e}")
-        update_progress(model_name, f"Error: {str(e)}", 0)
-        # Clean up on error
-        import matplotlib.pyplot as plt
-        plt.close('all')
     
 
 def extract_test_csv_if_needed(dataset_path):
@@ -652,21 +465,19 @@ def generate_ml_report(results):
     return json.dumps(report, indent=2, default=str)
 
 
-def update_model_details_json(model_name, evaluation_results):
+def update_model_details_json(model_name, evaluation_results, new_version=False):
     """
-    Update the model's details.json file with latest evaluation results.
-    Automatically updates benchmarks, metrics, model info, and audit trail.
+    Update details.json.
+    - If new_version=True, increment version (e.g., v1.0.0 -> v1.1.0).
+    - Else, overwrite current version data.
     """
     try:
-        # Construct path to details.json
         details_path = os.path.join('models', model_name, 'details.json')
         
-        # Load existing details or create new structure
         if os.path.exists(details_path):
             with open(details_path, 'r') as f:
                 details = json.load(f)
         else:
-            # Create default structure if file doesn't exist
             details = {
                 "model_name": model_name,
                 "version": "v1.0.0",
@@ -674,14 +485,20 @@ def update_model_details_json(model_name, evaluation_results):
                 "status": "Active"
             }
         
-        # Update with latest evaluation timestamp
+        # Versioning Logic
+        if new_version:
+            curr_v = details.get("version", "v1.0.0").lstrip('v').split('.')
+            if len(curr_v) >= 2:
+                # Increment minor version
+                new_v = f"v{curr_v[0]}.{int(curr_v[1]) + 1}.0"
+                details['version'] = new_v
+                # Add to history/comparison if needed, or simply update current
+        
         details['last_updated'] = datetime.now().strftime('%Y-%m-%d')
         
-        # ========== Update Model Info ==========
-        if 'model_info' not in details:
-            details['model_info'] = {}
-        
+        # Model Info
         model_info = evaluation_results.get('model_info', {})
+        details['model_info'] = details.get('model_info', {})
         details['model_info'].update({
             'model_type': model_info.get('model_type', 'Unknown'),
             'algorithm': model_info.get('model_type', 'Unknown'),
@@ -689,15 +506,12 @@ def update_model_details_json(model_name, evaluation_results):
             'feature_count': model_info.get('feature_count') or evaluation_results.get('num_features', 0)
         })
         
-        # ========== Update Benchmarks with Latest Metrics ==========
-        if 'benchmarks' not in details:
-            details['benchmarks'] = {}
-        
+        # Benchmarks
         metrics = evaluation_results.get('metrics', {})
-        problem_type = evaluation_results.get('problem_type', 'regression')
+        details['benchmarks'] = details.get('benchmarks', {})
         
+        problem_type = evaluation_results.get('problem_type', 'regression')
         if problem_type == 'regression':
-            # Regression metrics
             r2 = metrics.get('r2', 0)
             details['benchmarks'].update({
                 'overall_score': int(r2 * 100) if r2 else 0,
@@ -708,65 +522,35 @@ def update_model_details_json(model_name, evaluation_results):
                 'mape': round(metrics.get('mape', 0), 2) if metrics.get('mape') else 0
             })
         else:
-            # Classification metrics
-            accuracy = metrics.get('accuracy', 0)
+            acc = metrics.get('accuracy', 0)
             details['benchmarks'].update({
-                'overall_score': int(accuracy * 100) if accuracy else 0,
-                'accuracy': int(accuracy * 100) if accuracy else 0,
-                'primary_metric': round(metrics.get('roc_auc', accuracy), 4),
+                'overall_score': int(acc * 100) if acc else 0,
+                'accuracy': int(acc * 100) if acc else 0,
+                'primary_metric': round(metrics.get('accuracy', 0), 4),
                 'precision': round(metrics.get('precision_weighted', 0), 4),
                 'recall': round(metrics.get('recall_weighted', 0), 4),
                 'f1_score': round(metrics.get('f1_weighted', 0), 4)
             })
-        
-        # ========== Update Data Validation ==========
-        if 'data_validation' not in details:
-            details['data_validation'] = {}
-        
-        details['data_validation'].update({
-            'total_records': evaluation_results.get('num_test_samples', 0)
-        })
-        
-        # ========== Update Model Parameters if Available ==========
+            
+        # Data Validation
+        if 'data_validation' in evaluation_results:
+            details['data_validation'] = evaluation_results['data_validation']
+            # Hardcoded Scope updates for Capital Risk as requested
+            details['scope'] = details.get('scope', {})
+            details['scope'].update({
+                'target_variable': 'Capital Risk Score',
+                'business_use_case': 'Capital Adequacy & Risk Assessment'
+            })
+
+        # Model Parameters
         if model_info.get('model_params'):
             details['model_parameters'] = model_info['model_params']
-        
-        # ========== Update Production Monitoring ==========
-        if 'production_monitoring' not in details:
-            details['production_monitoring'] = {}
-        
-        details['production_monitoring']['last_evaluation_date'] = datetime.now().strftime('%Y-%m-%d')
-        
-        # ========== Update Audit Trail ==========
-        if 'audit_trail' not in details:
-            details['audit_trail'] = {
-                'created_date': datetime.now().strftime('%Y-%m-%d'),
-                'created_by': 'ML Engineering Team',
-                'change_log': []
-            }
-        
-        details['audit_trail']['last_modified_date'] = datetime.now().strftime('%Y-%m-%d')
-        details['audit_trail']['last_modified_by'] = 'Automated Evaluation System'
-        
-        # Add change log entry at the beginning
-        details['audit_trail']['change_log'].insert(0, {
-            'date': datetime.now().strftime('%Y-%m-%d'),
-            'version': details.get('version', 'v1.0.0'),
-            'changes': f"Automated evaluation completed - {problem_type.capitalize()} model"
-        })
-        
-        # Keep only last 10 change log entries
-        if len(details['audit_trail']['change_log']) > 10:
-            details['audit_trail']['change_log'] = details['audit_trail']['change_log'][:10]
-        
-        # ========== Save Updated Details ==========
-        os.makedirs(os.path.dirname(details_path), exist_ok=True)
+
+        # Save
         with open(details_path, 'w') as f:
             json.dump(details, f, indent=2)
-        
-        print(f"✓ Updated details.json for {model_name}")
+            
         return True
-        
     except Exception as e:
-        print(f"✗ Error updating details.json: {e}")
+        print(f"Error updating details.json: {e}")
         return False

@@ -1,7 +1,7 @@
 {
   "model_name": "Capital_Risk_GradientBoostedRegression",
-  "version": "v2.1.0",
-  "last_updated": "2025-12-13",
+  "version": "v1.0.0",
+  "last_updated": "2025-12-14",
   "framework": "Scikit-learn / XGBoost",
   "status": "Active",
   "model_info": {
@@ -13,21 +13,20 @@
     "model_description": "Advanced gradient boosting model for predicting capital risk exposure in banking portfolios"
   },
   "scope": {
-    "compliance_framework": "Basel III, SR 11-7",
-    "target_variable": "Capital Risk Score (0-100)",
+    "compliance_framework": "N/A",
+    "target_variable": "Capital Risk Score",
     "architecture": "Ensemble - Gradient Boosted Decision Trees",
     "training_period": "2020-2023 (36 months)",
     "validation_approach": "Out-of-time, Out-of-sample, K-fold Cross-validation",
-    "business_use_case": "Capital adequacy assessment and regulatory capital calculation"
+    "business_use_case": "Capital Adequacy & Risk Assessment"
   },
   "data_validation": {
-    "quality_score": 94,
     "total_records": 2000,
-    "missing_values": 1.8,
-    "duplicate_records": 0.1,
-    "outliers_detected": 4.2,
-    "data_completeness": "96.5%",
-    "feature_correlation_threshold": 0.85
+    "missing_values": 0.0,
+    "duplicate_records": 0.0,
+    "data_completeness": "100.0%",
+    "feature_count": 39,
+    "outliers_detected": 0
   },
   "model_parameters": {
     "alpha": 0.9,
@@ -118,7 +117,7 @@
     "monitoring_frequency": "Daily",
     "performance_degradation_threshold": 5,
     "retraining_trigger": "Quarterly or performance degradation > 5%",
-    "last_evaluation_date": "2025-12-13"
+    "last_evaluation_date": "2025-12-14"
   },
   "data_lineage": {
     "training_data_source": "Capital Markets Data Warehouse",
@@ -153,26 +152,26 @@
   "audit_trail": {
     "created_date": "2024-09-15",
     "created_by": "ML Engineering Team",
-    "last_modified_date": "2025-12-13",
+    "last_modified_date": "2025-12-14",
     "last_modified_by": "Automated Evaluation System",
     "change_log": [
       {
-        "date": "2025-12-13",
+        "date": "2025-12-14",
         "version": "v2.1.0",
         "changes": "Automated evaluation completed - Regression model"
       },
       {
-        "date": "2025-12-13",
+        "date": "2025-12-14",
         "version": "v2.1.0",
         "changes": "Automated evaluation completed - Regression model"
       },
       {
-        "date": "2025-12-13",
+        "date": "2025-12-14",
         "version": "v2.1.0",
         "changes": "Automated evaluation completed - Regression model"
       },
       {
-        "date": "2025-12-13",
+        "date": "2025-12-14",
         "version": "v2.1.0",
         "changes": "Automated evaluation completed - Regression model"
       },
