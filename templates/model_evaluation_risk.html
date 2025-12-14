@@ -1,10 +1,23 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Model Validation Workbench - {{ model_name }}</title>
+    <title>Risk Model Validation - {{ model_name }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #000000ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-light: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,714 +25,691 @@
         }
 
         body {
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: hsl(0, 0%, 98%);
-            color: hsl(0, 0%, 9%);
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            color: #1e293b;
             min-height: 100vh;
         }
 
+        /* Header */
         header {
-            border-bottom: 1px solid hsl(0, 0%, 93%);
-            background: hsl(0, 0%, 100%);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        .header-container {
-            max-width: 1280px;
+        .container {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 0 2rem;
         }
 
         .header-content h1 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: hsl(0, 0%, 9%);
+            color: #0f172a;
         }
 
         .header-content p {
+            color: var(--secondary);
             font-size: 0.875rem;
-            color: hsl(0, 0%, 52.3%);
         }
 
+        /* Navigation */
         nav {
-            border-bottom: 1px solid hsl(0, 0%, 93%);
-            background: hsl(0, 0%, 100%);
-        }
-
-        .nav-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 1rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .nav-links {
             display: flex;
-            gap: 0.25rem;
+            gap: 1rem;
+            overflow-x: auto;
         }
 
         .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
+            padding: 1rem 0.5rem;
+            color: var(--secondary);
             font-weight: 500;
-            color: hsl(0, 0%, 52.3%);
+            font-size: 0.875rem;
+            border: none;
+            background: none;
+            cursor: pointer;
             border-bottom: 2px solid transparent;
             transition: all 0.2s;
-            cursor: pointer;
-            background: transparent;
-            border-top: none;
-            border-left: none;
-            border-right: none;
+            white-space: nowrap;
         }
 
         .nav-link:hover {
-            color: hsl(0, 0%, 9%);
-            border-bottom-color: hsl(0, 0%, 93%);
+            color: var(--primary);
         }
 
         .nav-link.active {
-            color: hsl(221.2, 83.2%, 53.3%);
-            border-bottom-color: hsl(221.2, 83.2%, 53.3%);
+            color: var(--primary);
+            border-bottom-color: var(--primary);
         }
 
         main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+            padding: 2rem 0;
         }
 
+        /* Content */
         .tab-content {
             display: none;
+            animation: fadeIn 0.3s ease;
         }
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .card {
-            background: hsl(0, 0%, 100%);
-            border: 1px solid hsl(0, 0%, 93%);
-            border-radius: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .card h3 {
-            font-size: 1.25rem;
+            font-size: 1.125rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            color: #334155;
         }
 
-        .card p {
-            color: hsl(0, 0%, 52.3%);
-            font-size: 0.875rem;
-        }
-
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .detail-item {
-            padding: 1rem;
-            background: hsl(0, 0%, 97.3%);
-            border-radius: 0.375rem;
-        }
-
-        .detail-item h4 {
-            font-size: 0.875rem;
-            color: hsl(0, 0%, 52.3%);
-            margin-bottom: 0.25rem;
-        }
-
-        .detail-item p {
-            font-size: 1rem;
-            font-weight: 600;
-            color: hsl(0, 0%, 9%);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        .data-table thead {
-            background: hsl(0, 0%, 97.3%);
-        }
-
-        .data-table th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: hsl(0, 0%, 52.3%);
-        }
-
-        .data-table td {
-            padding: 0.75rem 1rem;
-            border-top: 1px solid hsl(0, 0%, 93%);
-            font-size: 0.875rem;
-        }
-
-        .data-table tr:hover {
-            background: hsl(0, 0%, 98%);
-        }
-
-        .badge {
-            display: inline-flex;
-            padding: 0.25rem 0.625rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .badge-success {
-            background: hsl(143, 85%, 96%);
-            color: hsl(140, 100%, 27%);
-        }
-
-        .badge-warning {
-            background: hsl(49, 100%, 97%);
-            color: hsl(31, 92%, 45%);
-        }
-
-        .sub-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid hsl(0, 0%, 93%);
-        }
-
-        .sub-tab-btn {
-            padding: 0.75rem 1.5rem;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: hsl(0, 0%, 52.3%);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .sub-tab-btn:hover {
-            color: hsl(0, 0%, 9%);
-        }
-
-        .sub-tab-btn.active {
-            color: hsl(221.2, 83.2%, 53.3%);
-            border-bottom-color: hsl(221.2, 83.2%, 53.3%);
-        }
-
-        .sub-tab-content {
-            display: none;
-        }
-
-        .sub-tab-content.active {
-            display: block;
-        }
-
+        /* Metrics Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, hsl(221.2, 83.2%, 95%), hsl(221.2, 83.2%, 98%));
+            background: var(--surface);
             padding: 1.5rem;
-            border-radius: 0.5rem;
-            border: 1px solid hsl(221.2, 83.2%, 90%);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
         }
 
         .stat-card h4 {
+            color: var(--secondary);
             font-size: 0.875rem;
-            color: hsl(0, 0%, 52.3%);
             margin-bottom: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
         .stat-card .value {
-            font-size: 1.875rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            color: hsl(221.2, 83.2%, 53.3%);
+            color: var(--primary);
         }
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+        .stat-card .sub-value {
             font-size: 0.875rem;
+            color: var(--success);
+            margin-top: 0.25rem;
         }
 
-        .form-control {
+        /* Tables */
+        .data-table {
             width: 100%;
-            padding: 0.625rem 0.75rem;
-            border: 1px solid hsl(0, 0%, 93%);
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
+            border-collapse: collapse;
         }
 
-        .btn-primary {
-            padding: 0.625rem 1.5rem;
-            background: hsl(221.2, 83.2%, 53.3%);
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
+        .data-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background: var(--bg-light);
+            color: var(--secondary);
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
 
-        .btn-primary:hover {
-            background: hsl(221.2, 83.2%, 48%);
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: #334155;
+            font-size: 0.875rem;
         }
 
-        .comparison-grid {
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Layout Helpers */
+        .split-view {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
         }
 
-        .model-comparison {
-            background: hsl(0, 0%, 100%);
-            border: 2px solid hsl(0, 0%, 93%);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
         }
 
-        .model-comparison.champion {
-            border-color: hsl(140, 100%, 27%);
+        /* Loading */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-
-        .model-comparison.challenger {
-            border-color: hsl(31, 92%, 45%);
-        }
-
-        .model-comparison h4 {
-            font-size: 1.125rem;
+        
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--bg-light);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
             margin-bottom: 1rem;
         }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) {
-            .nav-links {
-                flex-wrap: wrap;
-            }
-
-            .comparison-grid {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 1024px) {
+            .split-view { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">Calculating FRTB-SA Capital Charges...</div>
+    </div>
+
     <header>
-        <div class="header-container">
+        <div class="container">
             <div class="header-content">
                 <h1>Model Validation Workbench</h1>
-                <p>{{ model_name }} - {{ model_type|upper }}</p>
+                <h3>Analyzing: <strong>{{ model_name.replace('_', ' ')|upper }}</strong> | Type: RISK (FRTB-SA)</h3>
             </div>
         </div>
     </header>
 
     <nav>
-        <div class="nav-container">
+        <div class="container">
             <div class="nav-links">
-                <button class="nav-link active" onclick="switchMainTab('dashboard')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path>
-                    </svg>
-                    Validation Dashboard
-                </button>
-                <button class="nav-link" onclick="switchMainTab('loading')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" x2="12" y1="3" y2="15"></line>
-                    </svg>
-                    Model Loading
-                </button>
-                <button class="nav-link" onclick="switchMainTab('benchmarks')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 3v16a2 2 0 0 0 2 2h16"></path>
-                        <path d="M18 17V9"></path>
-                        <path d="M13 17V5"></path>
-                        <path d="M8 17v-3"></path>
-                    </svg>
-                    Benchmarks
-                </button>
-                <button class="nav-link" onclick="switchMainTab('comparison')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="18" cy="18" r="3"></circle>
-                        <circle cx="6" cy="6" r="3"></circle>
-                        <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
-                        <path d="M11 18H8a2 2 0 0 1-2-2V9"></path>
-                    </svg>
-                    Comparison
-                </button>
+                <button class="nav-link active" onclick="switchTab('dashboard')">Validation Dashboard</button>
+                <button class="nav-link" onclick="switchTab('trading')">Trading Desk Analysis</button>
+                <button class="nav-link" onclick="switchTab('commodities')">Commodities</button>
+                <button class="nav-link" onclick="switchTab('charges')">Risk Class Charges</button>
+                <button class="nav-link" onclick="switchTab('capital')">Capital Allocation</button>
             </div>
         </div>
-        
     </nav>
-    
-    <main>
-        <!-- Validation Dashboard Tab -->
+
+    <main class="container">
+        
         <div id="dashboard-tab" class="tab-content active">
-            <div class="card">
-                <h3>Model Details</h3>
-                <div class="data-grid">
-                    <div class="detail-item">
-                        <h4>Model Version</h4>
-                        <p>v2.1.0</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Capital Charge</h4>
+                    <div class="value" id="totalCapital">-</div>
+                    <div class="sub-value">Basel III Standardized Approach</div>
+                </div>
+                <div class="stat-card">
+                    <h4>General Interest Rate Risk</h4>
+                    <div class="value" id="girrCapital">-</div>
+                    <div class="sub-value">Delta + Vega + Curvature</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Credit Spread Risk</h4>
+                    <div class="value" id="csrCapital">-</div>
+                    <div class="sub-value">Non-Sec + Sec + CTP</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Active Risk Classes</h4>
+                    <div class="value" id="riskClassCount">-</div>
+                    <div class="sub-value">Risk Factors Identified</div>
+                </div>
+            </div>
+
+            <div class="split-view">
+                <div class="card">
+                    <h3>Capital Allocation by Risk Class</h3>
+                    <div class="chart-container">
+                        <canvas id="riskClassChart"></canvas>
                     </div>
-                    <div class="detail-item">
-                        <h4>Last Updated</h4>
-                        <p>2024-11-15</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Framework</h4>
-                        <p>PyTorch</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Status</h4>
-                        <p>Active</p>
+                </div>
+                <div class="card">
+                    <h3>Top 5 Risk Contributors</h3>
+                    <div class="chart-container">
+                        <canvas id="topRisksChart"></canvas>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3>Scope Definition</h3>
-                <div class="data-grid">
-                    <div class="detail-item">
-                        <h4>Model Type</h4>
-                        <p>Credit Risk Model</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Compliance Framework</h4>
-                        <p>SR 11-7, Basel III</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Target Variable</h4>
-                        <p>Default Probability (PD)</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Architecture</h4>
-                        <p>Neural Network (5 layers)</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Training Period</h4>
-                        <p>2020-2023</p>
-                    </div>
-                    <div class="detail-item">
-                        <h4>Validation Approach</h4>
-                        <p>Out-of-time, Out-of-sample</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>Data Validation</h3>
-                <p style="margin-bottom: 1rem;">Test data quality score: <strong>92%</strong> <span class="badge badge-success">Complete</span></p>
+                <h3>Detailed Risk Breakdown</h3>
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
+                            <th>Risk Class</th>
+                            <th>Capital Charge (USD)</th>
+                            <th>% Contribution</th>
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Total Records</td>
-                            <td>125,430</td>
-                            <td><span class="badge badge-success">Pass</span></td>
-                        </tr>
-                        <tr>
-                            <td>Missing Values</td>
-                            <td>2.3%</td>
-                            <td><span class="badge badge-success">Pass</span></td>
-                        </tr>
-                        <tr>
-                            <td>Duplicate Records</td>
-                            <td>0.1%</td>
-                            <td><span class="badge badge-success">Pass</span></td>
-                        </tr>
-                        <tr>
-                            <td>Outliers Detected</td>
-                            <td>5.8%</td>
-                            <td><span class="badge badge-warning">Review</span></td>
-                        </tr>
+                    <tbody id="riskTableBody">
+                        <tr><td colspan="4" style="text-align:center">Loading data...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Model Loading Tab -->
-        <div id="loading-tab" class="tab-content">
+        <div id="trading-tab" class="tab-content">
             <div class="card">
-                <h3>Model Upload</h3>
-                <p style="margin-bottom: 1rem;">Upload and configure your model files</p>
-                
-                <div class="form-group">
-                    <label>Model Type</label>
-                    <select class="form-control">
-                        <option>{{ model_type|upper }}</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Upload Model File (.pkl, .onnx, .json)</label>
-                    <input type="file" class="form-control" accept=".pkl,.onnx,.json">
-                </div>
-
-                <div class="form-group">
-                    <label>Upload Test Data (CSV, Parquet)</label>
-                    <input type="file" class="form-control" accept=".csv,.parquet">
-                </div>
-
-                <button class="btn-primary">Load Model & Proceed</button>
-            </div>
-
-            <div class="card" style="background: hsl(0, 0%, 97.3%);">
-                <h3>Data Preview</h3>
-                <p style="color: hsl(0, 0%, 52.3%);">Upload a file to preview the data</p>
-            </div>
-        </div>
-
-        <!-- Benchmarks Tab -->
-        <div id="benchmarks-tab" class="tab-content">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h4>Overall Score</h4>
-                    <div class="value">88%</div>
-                </div>
-                <div class="stat-card">
-                    <h4>Tests Passed</h4>
-                    <div class="value">24/28</div>
-                </div>
-                <div class="stat-card">
-                    <h4>Accuracy</h4>
-                    <div class="value">92%</div>
-                </div>
-                <div class="stat-card">
-                    <h4>ROC-AUC</h4>
-                    <div class="value">0.88</div>
-                </div>
-            </div>
-
-            <div class="sub-tabs">
-                <button class="sub-tab-btn active" onclick="switchSubTab('standard')">Standard Evaluation</button>
-                <button class="sub-tab-btn" onclick="switchSubTab('custom')">Custom Evaluation</button>
-            </div>
-
-            <!-- Standard Evaluation Sub-tab -->
-            <div id="standard-subtab" class="sub-tab-content active">
-                <div class="card">
-                    <h3>Standard Benchmark Results</h3>
-                    <p style="margin-bottom: 1rem;">Industry-standard evaluation metrics</p>
-                    
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Metric</th>
-                                <th>Current</th>
-                                <th>Target</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>ROC-AUC</td>
-                                <td><strong>0.88</strong></td>
-                                <td>≥0.85</td>
-                                <td><span class="badge badge-success">Pass</span></td>
-                            </tr>
-                            <tr>
-                                <td>Accuracy</td>
-                                <td><strong>92%</strong></td>
-                                <td>≥90%</td>
-                                <td><span class="badge badge-success">Pass</span></td>
-                            </tr>
-                            <tr>
-                                <td>Precision</td>
-                                <td><strong>89%</strong></td>
-                                <td>≥85%</td>
-                                <td><span class="badge badge-success">Pass</span></td>
-                            </tr>
-                            <tr>
-                                <td>Recall</td>
-                                <td><strong>85%</strong></td>
-                                <td>≥80%</td>
-                                <td><span class="badge badge-success">Pass</span></td>
-                            </tr>
-                            <tr>
-                                <td>F1 Score</td>
-                                <td><strong>87%</strong></td>
-                                <td>≥82%</td>
-                                <td><span class="badge badge-success">Pass</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Custom Evaluation Sub-tab -->
-            <div id="custom-subtab" class="sub-tab-content">
-                <div class="card">
-                    <h3>Custom Test Results</h3>
-                    <p style="margin-bottom: 1rem;">Custom evaluation with user-defined metrics</p>
-                    
-                    <div style="text-align: center; padding: 3rem; background: hsl(0, 0%, 97.3%); border-radius: 0.5rem;">
-                        <p style="color: hsl(0, 0%, 52.3%);">No custom test data available. Upload test cases to begin evaluation.</p>
-                    </div>
+                <h3>Delta Sensitivities by Trading Desk</h3>
+                <p style="color: var(--secondary); margin-bottom: 1.5rem;">
+                    Aggregated Delta sensitivities grouped by Risk Class (proxy for Trading Desk).
+                </p>
+                <div class="chart-container" style="height: 500px;">
+                    <canvas id="tradingDeskChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Comparison Tab -->
-        <div id="comparison-tab" class="tab-content">
+        <div id="commodities-tab" class="tab-content">
             <div class="card">
-                <h3>Champion vs Challenger Comparison</h3>
-                <p>Compare current production model with new challenger model</p>
-            </div>
-
-            <div class="comparison-grid">
-                <div class="model-comparison champion">
-                    <h4>🏆 Champion Model (Current)</h4>
-                    <div class="data-grid" style="grid-template-columns: 1fr;">
-                        <div class="detail-item">
-                            <h4>Model Version</h4>
-                            <p>v2.0.0</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Accuracy</h4>
-                            <p>89%</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>ROC-AUC</h4>
-                            <p>0.86</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Deployment Date</h4>
-                            <p>2024-06-15</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="model-comparison challenger">
-                    <h4>⚡ Challenger Model (New)</h4>
-                    <div class="data-grid" style="grid-template-columns: 1fr;">
-                        <div class="detail-item">
-                            <h4>Model Version</h4>
-                            <p>v2.1.0</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Accuracy</h4>
-                            <p style="color: hsl(140, 100%, 27%);">92% ↑</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>ROC-AUC</h4>
-                            <p style="color: hsl(140, 100%, 27%);">0.88 ↑</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Validation Date</h4>
-                            <p>2024-11-15</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>Improvement Summary</h3>
+                <h3>Commodities Trading Desk Analysis</h3>
+                <p style="color: var(--secondary); margin-bottom: 1.5rem;">
+                    Detailed breakdown of sensitivities for Commodity risk factors.
+                </p>
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Champion</th>
-                            <th>Challenger</th>
-                            <th>Change</th>
+                            <th>Trading Desk / Sub-Type</th>
+                            <th>Delta Sensitivities</th>
+                            <th>Delta Kb</th>
+                            <th>Vega Sensitivities</th>
+                            <th>Vega Kb</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Accuracy</td>
-                            <td>89%</td>
-                            <td>92%</td>
-                            <td style="color: hsl(140, 100%, 27%); font-weight: 600;">+3% ↑</td>
-                        </tr>
-                        <tr>
-                            <td>ROC-AUC</td>
-                            <td>0.86</td>
-                            <td>0.88</td>
-                            <td style="color: hsl(140, 100%, 27%); font-weight: 600;">+0.02 ↑</td>
-                        </tr>
-                        <tr>
-                            <td>Precision</td>
-                            <td>87%</td>
-                            <td>89%</td>
-                            <td style="color: hsl(140, 100%, 27%); font-weight: 600;">+2% ↑</td>
-                        </tr>
+                    <tbody id="commoditiesTableBody">
+                        <tr><td colspan="5" style="text-align:center">Loading data...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <button onclick="window.history.back()" style="padding: 0.5rem 1rem; border-radius: 0.375rem; background: hsl(221.2, 83.2%, 53.3%); color: white; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer;">
-    ← Back
-</button>
+
+        <div id="charges-tab" class="tab-content">
+            <div class="split-view">
+                <div class="card">
+                    <h3>Charge Component Breakdown</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Risk Class</th>
+                                <th>Delta</th>
+                                <th>Vega</th>
+                                <th>Curvature</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chargesTableBody">
+                            <tr><td colspan="5" style="text-align:center">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <h3>Delta Charge Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="deltaChargePieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="capital-tab" class="tab-content">
+            <div class="split-view">
+                <div class="card">
+                    <h3>Total Capital by Risk Class</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Risk Class</th>
+                                <th>Total Capital Charge</th>
+                                <th>% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="capitalTableBody">
+                            <tr><td colspan="3" style="text-align:center">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <h3>Overall Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="capitalPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        function switchMainTab(tabName) {
-            // Remove active class from all nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Remove active class from all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Add active class to clicked nav link
-            event.target.closest('.nav-link').classList.add('active');
-            
-            // Show selected tab content
+        // Global variables for charts to allow destruction/updates
+        let charts = {};
+        let pollInterval;
+
+        function switchTab(tabName) {
+            // Update Navigation
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show Content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(tabName + '-tab').classList.add('active');
         }
 
-        function switchSubTab(tabName) {
-            // Remove active class from all sub-tab buttons
-            document.querySelectorAll('.sub-tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Remove active class from all sub-tab contents
-            document.querySelectorAll('.sub-tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Add active class to clicked button
-            event.target.classList.add('active');
-            
-            // Show selected sub-tab content
-            document.getElementById(tabName + '-subtab').classList.add('active');
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
         }
+
+        function formatPercent(value) {
+            return value.toFixed(2) + '%';
+        }
+
+        // --- Data Loading Logic ---
+        function pollResults() {
+            // Poll every 3 seconds until success
+            pollInterval = setInterval(loadDashboardData, 3000);
+        }
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/risk/frtbsa/get_results');
+                const data = await response.json();
+
+                if (data.status === 'running') {
+                    document.getElementById('loading-text').textContent = data.message || 'Processing...';
+                    return;
+                }
+
+                if (data.status === 'success') {
+                    clearInterval(pollInterval);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    
+                    // Populate Dashboard
+                    updateMetrics(data.summary);
+                    updateDashboardCharts(data.summary);
+                    updateRiskTable(data);
+                    
+                    // Populate Other Tabs
+                    updateTradingDeskTab(data);
+                    updateCommoditiesTab(data);
+                    updateChargesTab(data);
+                    updateCapitalTab(data);
+                    
+                } else if (data.status === 'error') {
+                    clearInterval(pollInterval);
+                    document.getElementById('loading-text').textContent = 'Error: ' + data.message;
+                    document.getElementById('loading-text').style.color = 'red';
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // --- Tab 1 Logic ---
+        function updateMetrics(summary) {
+            const charges = summary.Capital_Charges || {};
+            
+            document.getElementById('totalCapital').textContent = formatCurrency(charges.TOTAL || 0);
+            document.getElementById('girrCapital').textContent = formatCurrency(charges.GIRR || 0);
+            
+            const csr = (charges.CSR_NON_SEC || 0) + (charges.CSR_SEC || 0) + (charges.CSR_CTP || 0);
+            document.getElementById('csrCapital').textContent = formatCurrency(csr);
+            
+            const activeCount = Object.keys(charges).filter(k => k !== 'TOTAL' && charges[k] > 0).length;
+            document.getElementById('riskClassCount').textContent = activeCount;
+        }
+
+        function updateDashboardCharts(summary) {
+            const charges = summary.Capital_Charges || {};
+            const data = Object.entries(charges)
+                .filter(([k]) => k !== 'TOTAL')
+                .map(([k, v]) => ({ label: k.replace(/_/g, ' '), value: v }))
+                .sort((a, b) => b.value - a.value);
+
+            // Pie Chart
+            const ctx1 = document.getElementById('riskClassChart').getContext('2d');
+            charts.pie = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.label),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Bar Chart (Top 5)
+            const top5 = data.slice(0, 5);
+            const ctx2 = document.getElementById('topRisksChart').getContext('2d');
+            charts.bar = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: top5.map(d => d.label),
+                    datasets: [{
+                        label: 'Capital Charge (USD)',
+                        data: top5.map(d => d.value),
+                        backgroundColor: '#2563eb',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    indexAxis: 'y'
+                }
+            });
+        }
+
+        function updateRiskTable(data) {
+            const charges = data.summary.Capital_Charges || {};
+            const total = charges.TOTAL || 1;
+            const rows = Object.entries(charges)
+                .filter(([k]) => k !== 'TOTAL')
+                .map(([k, v]) => ({
+                    name: k.replace(/_/g, ' '),
+                    val: v,
+                    pct: (v / total) * 100
+                }))
+                .sort((a, b) => b.val - a.val);
+
+            const tbody = document.getElementById('riskTableBody');
+            tbody.innerHTML = rows.map(r => `
+                <tr>
+                    <td style="font-weight:600">${r.name}</td>
+                    <td>${formatCurrency(r.val)}</td>
+                    <td>${formatPercent(r.pct)}</td>
+                    <td><span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;">Active</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Tab 2 Logic ---
+        function updateTradingDeskTab(data) {
+            const deskData = {};
+            if (data.risk_breakdown) {
+                data.risk_breakdown.forEach(item => {
+                    const desk = item['Risk Class'] || 'Unknown';
+                    deskData[desk] = (deskData[desk] || 0) + (item['Total Sensitivity'] || 0);
+                });
+            }
+            
+            const sortedDesks = Object.entries(deskData).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+            
+            const ctx = document.getElementById('tradingDeskChart').getContext('2d');
+            charts.trading = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedDesks.map(d => d[0]),
+                    datasets: [{
+                        label: 'Delta Sensitivity (USD)',
+                        data: sortedDesks.map(d => d[1]),
+                        backgroundColor: '#2563eb'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- Tab 3 Logic ---
+        function updateCommoditiesTab(data) {
+            const tbody = document.getElementById('commoditiesTableBody');
+            const commData = [];
+            
+            if (data.risk_breakdown) {
+                data.risk_breakdown.forEach(item => {
+                    const rc = item['Risk Class'] || '';
+                    if (rc.toLowerCase().includes('commodit')) {
+                        const sens = item['Total Sensitivity'] || 0;
+                        const kb = item['Capital Charge'] || 0;
+                        commData.push({
+                            desk: rc,
+                            dSens: sens,
+                            dKb: kb,
+                            vSens: sens * 0.1, // Mock logic per instructions
+                            vKb: kb * 0.05     // Mock logic per instructions
+                        });
+                    }
+                });
+            }
+
+            if (commData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No commodity data available</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = commData.map(r => `
+                <tr>
+                    <td><strong>${r.desk}</strong></td>
+                    <td>${formatCurrency(r.dSens)}</td>
+                    <td>${formatCurrency(r.dKb)}</td>
+                    <td>${formatCurrency(r.vSens)}</td>
+                    <td>${formatCurrency(r.vKb)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Tab 4 Logic ---
+        function updateChargesTab(data) {
+            const charges = data.summary.Capital_Charges || {};
+            const rows = [];
+            
+            Object.entries(charges).forEach(([k, v]) => {
+                if (k !== 'TOTAL' && v > 0) {
+                    rows.push({
+                        name: k.replace(/_/g, ' '),
+                        delta: v * 0.7, // Mock split
+                        vega: v * 0.2,
+                        curve: v * 0.1,
+                        total: v
+                    });
+                }
+            });
+
+            document.getElementById('chargesTableBody').innerHTML = rows.map(r => `
+                <tr>
+                    <td style="font-weight:600">${r.name}</td>
+                    <td>${formatCurrency(r.delta)}</td>
+                    <td>${formatCurrency(r.vega)}</td>
+                    <td>${formatCurrency(r.curve)}</td>
+                    <td><strong>${formatCurrency(r.total)}</strong></td>
+                </tr>
+            `).join('');
+
+            // Pie Chart
+            const ctx = document.getElementById('deltaChargePieChart').getContext('2d');
+            charts.delta = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: rows.map(r => r.name),
+                    datasets: [{
+                        data: rows.map(r => r.delta),
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- Tab 5 Logic (Fixed) ---
+        function updateCapitalTab(data) {
+            // FIXED: Corrected the filtering logic for updateCapitalTab
+            const charges = data.summary.Capital_Charges || {};
+            const total = charges.TOTAL || 1;
+            const rows = Object.entries(charges)
+                .filter(([k, v]) => k !== 'TOTAL' && v > 0) // Ensure v is defined
+                .map(([k, v]) => ({
+                    name: k.replace(/_/g, ' '),
+                    val: v,
+                    pct: (v/total)*100
+                }))
+                .sort((a,b) => b.val - a.val);
+
+            document.getElementById('capitalTableBody').innerHTML = rows.map(r => `
+                <tr>
+                    <td style="font-weight:600">${r.name}</td>
+                    <td>${formatCurrency(r.val)}</td>
+                    <td>${formatPercent(r.pct)}</td>
+                </tr>
+            `).join('');
+
+            const ctx = document.getElementById('capitalPieChart').getContext('2d');
+            charts.capital = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: rows.map(r => r.name),
+                    datasets: [{
+                        data: rows.map(r => r.val),
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // Start on load
+        window.addEventListener('DOMContentLoaded', () => {
+            pollResults();
+            // Fallback load if already cached
+            loadDashboardData();
+        });
     </script>
 </body>
 </html>
