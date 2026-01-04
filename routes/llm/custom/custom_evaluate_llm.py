@@ -58,8 +58,8 @@ progress_lock = threading.Lock()
 cli = ollama_client(host=OLLAMA_URL)
 
 MODELS = {
-    "Wealth Advisory Model": "models/wealth_advisory", 
-    "Compliance Model": "models/compliance"
+    "wealth_advisory_model": "models/wealth_advisory", 
+    "compliance_model": "models/compliance"
 }
 
 
@@ -83,7 +83,7 @@ def run_custom_evaluation_route(model_name):
     
     try:
         # Import custom evaluator        
-        
+        upload_dir = os.path.join(UPLOAD_FOLDER)
         # For custom_llm, get model path from custom_models folder
         # Determine model path based on evaluation type
         wealth_advisory_dir = os.path.join(upload_dir, 'wealth_advisory')

@@ -63,8 +63,8 @@ STANDARD_EVAL_STAGES = [
 ]
 
 MODELS = {
-    "Wealth Advisory Model": "models/wealth_advisory", 
-    "Compliance Model": "models/compliance"
+    "wealth_advisory_model": "models/wealth_advisory", 
+    "compliance_model": "models/compliance"
 }
 
 processing_status = {}  # Track per-model status
@@ -458,8 +458,7 @@ def check_status(model_name):
     progress_stage = progress.get('stage', 0)
     
     # Check if results exist in file
-    try:
-        from llm_tool_bigbench_utils import load_results_from_file
+    try:        
         file_results = load_results_from_file(model_name)
         has_results = len(file_results) > 0
     except:
@@ -1033,7 +1032,7 @@ def run_evaluation(model_name: str, model_path: str = None, num_examples: int = 
         update_standard_progress(model_name, 5, "Saving results...")
         print(f"📊 Stage 5: Saving results for {model_name}")
         
-        # Save to file instead of trying to import app
+        # Save to file instead of trying to #import app
         if save_results_to_file(model_name, entry):
             print(f"✅ Results saved to file for {model_name}")
         else:
@@ -1045,8 +1044,8 @@ def run_evaluation(model_name: str, model_path: str = None, num_examples: int = 
         update_standard_progress(model_name, -1, f"Error: {str(e)}")
         print(f"❌ Evaluation failed for {model_name}: {e}")
         try:
-            import app
-            app.processing_status[model_name] = "error"
+            #import app
+            processing_status[model_name] = "error"
         except:
             pass
         raise e
@@ -1058,10 +1057,10 @@ def run_evaluation_in_background(model_name, model_path, eval_params):
     
     # Set initial status
     try:
-        import app
-        app.processing_status[model_name] = "processing"
-        if model_name in app.current_results:
-            del app.current_results[model_name]
+        #import app
+        processing_status[model_name] = "processing"
+        if model_name in current_results:
+            del current_results[model_name]
     except:
         pass
 
@@ -1100,16 +1099,16 @@ def update_standard_progress(model_name, stage, message, task_details=None):
     
     # Update app immediately
     try:
-        import app
-        app.evaluation_progress[model_name] = progress_data
+        #import app
+        evaluation_progress[model_name] = progress_data
         
         # Update status based on stage
         if stage == -1:
-            app.processing_status[model_name] = "error"
+            processing_status[model_name] = "error"
         elif stage >= 5:  # Change this back to 5 instead of 6
-            app.processing_status[model_name] = "complete"
+            processing_status[model_name] = "complete"
         else:
-            app.processing_status[model_name] = "processing"
+            processing_status[model_name] = "processing"
             
         print(f"📊 Progress updated: {model_name} -> Stage {stage}: {message}")
     except Exception as e:
@@ -1148,14 +1147,10 @@ def _save_enhanced_results(model_name: str, results: List[Dict], task_type_resul
     
     # Store in app's current_results ONLY when evaluation is complete
     try:
-        import sys
-        if 'app' in sys.modules:
-            app = sys.modules['app']
-            # Use model_name directly as the key
-            app.current_results[model_name] = [entry]
-            print(f"💾 FINAL Results stored in memory for {model_name}")
-        else:
-            print(f"💾 App module not found, results not stored")
+        
+        # Use model_name directly as the key
+        current_results[model_name] = [entry]
+        print(f"💾 FINAL Results stored in memory for {model_name}")
     except Exception as e:
         print(f"Failed to store results in app: {e}")
 
