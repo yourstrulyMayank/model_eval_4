@@ -124,9 +124,9 @@ def process_agentic_request():
                     })
             else:  # llm
                 if eval_type == 'standard':
-                    redirect_url = url_for('evaluate_llm', model_name=model_name)
+                    redirect_url = url_for('llm_t.evaluate_llm', model_name=model_name)
                 else:
-                    redirect_url = url_for('custom_llm', model_name=model_name)
+                    redirect_url = url_for('llm_c.custom_llm', model_name=model_name)
             
             return jsonify({
                 'response': f'Starting {eval_type} evaluation for {model_name}...',
