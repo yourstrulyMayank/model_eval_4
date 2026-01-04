@@ -69,7 +69,7 @@ def run_custom_ml_evaluation(model_name):
         for file in files:
             if file.endswith(('.pkl', '.joblib', '.model')):
                 model_file = os.path.join(upload_dir, file)
-            elif file.endswith(('.xlsx', '.xls', '.csv')):
+            elif file.startswith('test.') and file.endswith(('.xlsx', '.xls', '.csv')):
                 test_file = os.path.join(upload_dir, file)
             elif file.startswith('steps.') and file.split('.')[-1] in ('py', 'json', 'txt'):
                 steps_file = os.path.join(upload_dir, file)
