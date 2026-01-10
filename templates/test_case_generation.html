@@ -67,7 +67,7 @@
 
         .left-panel {
             width: auto;
-            background: linear-gradient(135deg, #f3e5f5 0%, #eeb0c2ff 100%);
+            background: linear-gradient(135deg, #f3e5f5 0%, #09889eff 100%);
             border: 1px solid rgba(233, 30, 99, 0.3);
             border-radius: 20px;
             padding: 30px;
@@ -79,6 +79,119 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             
+        }
+        .llm-test-case {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .test-case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .test-case-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .severity-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-critical {
+            background: #fee;
+            color: #c53030;
+        }
+
+        .severity-high {
+            background: #fed7d7;
+            color: #e53e3e;
+        }
+
+        .severity-medium {
+            background: #feebc8;
+            color: #dd6b20;
+        }
+
+        .severity-low {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .test-case-section {
+            margin-bottom: 10px;
+        }
+
+        .test-case-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+
+        .test-case-content {
+            font-size: 14px;
+            color: #2d3748;
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #e2e8f0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .test-case-content.prompt {
+            background: #edf2f7;
+            border-left-color: #667eea;
+        }
+
+        .test-case-content.expected {
+            background: #f0fff4;
+            border-left-color: #48bb78;
+        }
+
+        .test-case-content.criteria {
+            background: #fffaf0;
+            border-left-color: #ed8936;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+
+        .copy-all-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-all-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.05);
         }
 
         .left-panel h2 {
@@ -431,6 +544,43 @@
             transform: scale(1.05);
         }
 
+        .category-section {
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .category-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .category-description {
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .category-focus {
+            font-size: 13px;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .category-focus strong {
+            color: #2d3748;
+        }
+
         
     </style>
 </head>
@@ -456,6 +606,14 @@
                     <option value="Compliance Assist">Compliance Assist</option>
                     <option value="Wealth Assist">Wealth Assist</option>
                     <option value="Capital Risk">Capital Risk</option>
+                </select>
+            </div>
+
+            <div class="dropdown-section" style="margin-top: 20px;">
+                <label for="model-type-select">Model Type:</label>
+                <select id="model-type-select" class="model-dropdown">
+                    <option value="ml">ML Model (uses sample format)</option>
+                    <option value="llm">LLM Model (categorized testing)</option>
                 </select>
             </div>
 
@@ -517,6 +675,7 @@
         const testFormatInput = document.getElementById('test-format-input');
         const modelCardName = document.getElementById('model-card-name');
         const testFormatName = document.getElementById('test-format-name');
+        
         let currentTableData = [];
         let currentColumnOrder = [];
 
@@ -576,6 +735,25 @@
                     testFormatInput.value = '';
                     modelCardName.textContent = 'No file selected';
                     testFormatName.textContent = 'No file selected';
+                    
+                    modelSelect.addEventListener('change', function(e) {
+                    const selectedModel = e.target.value;
+                    const modelTypeSelect = document.getElementById('model-type-select');
+                    
+                    // Auto-select model type based on existing models
+                    const llmModels = ['Compliance Assist', 'Wealth Assist'];
+                    const mlModels = ['Capital Risk'];
+                    
+                    if (llmModels.includes(selectedModel)) {
+                        modelTypeSelect.value = 'llm';
+                        modelTypeSelect.disabled = true;
+                    } else if (mlModels.includes(selectedModel)) {
+                        modelTypeSelect.value = 'ml';
+                        modelTypeSelect.disabled = true;
+                    } else {
+                        modelTypeSelect.disabled = false;
+                    }
+                });
 
                     // Add message to chat
                     addMessage(`New model "${data.model_name}" has been added and selected. You can now generate test cases for it!`, false);
@@ -680,6 +858,7 @@
         async function downloadTableAsCSV(tableData) {
             const selectedModel = modelSelect.value;
             
+            
             try {
                 const response = await fetch("{{ url_for('tcg.download_test_cases') }}", {
                     method: 'POST',
@@ -713,6 +892,7 @@
         async function sendMessage() {
             const message = chatInput.value.trim();
             const selectedModel = modelSelect.value;
+            const modelType = document.getElementById('model-type-select').value;
 
             if (!message) return;
 
@@ -729,7 +909,7 @@
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<span class="loading"></span>';
 
-             try {
+            try {
                 const response = await fetch("{{ url_for('tcg.generate_test_cases') }}", {
                     method: 'POST',
                     headers: {
@@ -737,21 +917,22 @@
                     },
                     body: JSON.stringify({
                         message: message,
-                        model: selectedModel
+                        model: selectedModel,
+                        model_type: modelType
                     })
                 });
 
                 const data = await response.json();
 
-                if (data.response) {
-                    // Check if response includes table data
-                    if (data.table_data && data.table_data.length > 0) {
-                        currentTableData = data.table_data;  // ADD THIS LINE
-                        currentColumnOrder = data.columns || Object.keys(data.table_data[0] || {});
-                        addMessage(data.response, false, data.table_data);
-                    } else {
-                        addMessage(data.response, false);
-                    }
+                if (data.categorized_data) {
+                    addCategorizedMessage(data.response, data.categorized_data, data.model_type);
+                } else if (data.table_data) {
+                    // Backward compatibility for old format
+                    currentTableData = data.table_data;
+                    currentColumnOrder = data.columns || Object.keys(data.table_data[0] || {});
+                    addMessage(data.response, false, data.table_data);
+                } else if (data.response) {
+                    addMessage(data.response, false);
                 } else if (data.error) {
                     addMessage('Error: ' + data.error, false);
                 }
@@ -759,21 +940,234 @@
                 addMessage('Error: Failed to generate test cases. Please try again.', false);
                 console.error('Error:', error);
             } finally {
-                // Re-enable send button
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'Send';
             }
         }
-         const observer = new MutationObserver(() => {
-                document.querySelectorAll('.assistant-message').forEach(msg => {
-                    if (msg.querySelector('table') && !msg.classList.contains('has-table')) {
-                        msg.classList.add('has-table');
+
+    function addCategorizedMessage(text, categorizedData, modelType) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message assistant-message';
+    messageDiv.style.maxWidth = '95%';
+    messageDiv.style.width = '95%';
+    
+    // Add intro text
+    const introDiv = document.createElement('div');
+    introDiv.textContent = text;
+    introDiv.style.marginBottom = '20px';
+    introDiv.style.fontWeight = '600';
+    messageDiv.appendChild(introDiv);
+    
+    // Add each category
+    Object.keys(categorizedData).forEach(categoryKey => {
+        const category = categorizedData[categoryKey];
+        
+        const categorySection = document.createElement('div');
+        categorySection.className = 'category-section';
+        
+        // Category header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'category-header';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'category-title';
+        titleDiv.textContent = category.info.name;
+        headerDiv.appendChild(titleDiv);
+        
+        const descDiv = document.createElement('div');
+        descDiv.className = 'category-description';
+        descDiv.textContent = category.info.description;
+        headerDiv.appendChild(descDiv);
+        
+        const focusDiv = document.createElement('div');
+        focusDiv.className = 'category-focus';
+        focusDiv.innerHTML = `<strong>Focus Areas:</strong> ${category.info.focus_areas.join(', ')}`;
+        headerDiv.appendChild(focusDiv);
+        
+        categorySection.appendChild(headerDiv);
+        
+        // Test cases
+        if (category.test_cases && category.test_cases.length > 0) {
+            if (modelType === 'llm') {
+                // LLM format - individual test case cards
+                category.test_cases.forEach((testCase, index) => {
+                    const testCaseDiv = document.createElement('div');
+                    testCaseDiv.className = 'llm-test-case';
+                    
+                    // Header with name and severity
+                    const testHeader = document.createElement('div');
+                    testHeader.className = 'test-case-header';
+                    
+                    const testName = document.createElement('div');
+                    testName.className = 'test-case-name';
+                    testName.textContent = `${index + 1}. ${testCase.test_name || 'Unnamed Test'}`;
+                    testHeader.appendChild(testName);
+                    
+                    if (testCase.severity) {
+                        const severityBadge = document.createElement('span');
+                        severityBadge.className = `severity-badge severity-${testCase.severity.toLowerCase()}`;
+                        severityBadge.textContent = testCase.severity;
+                        testHeader.appendChild(severityBadge);
                     }
+                    
+                    testCaseDiv.appendChild(testHeader);
+                    
+                    // Prompt section
+                    const promptSection = document.createElement('div');
+                    promptSection.className = 'test-case-section';
+                    const promptLabel = document.createElement('div');
+                    promptLabel.className = 'test-case-label';
+                    promptLabel.textContent = '📝 Test Prompt:';
+                    promptSection.appendChild(promptLabel);
+                    const promptContent = document.createElement('div');
+                    promptContent.className = 'test-case-content prompt';
+                    promptContent.textContent = testCase.prompt || 'N/A';
+                    promptSection.appendChild(promptContent);
+                    testCaseDiv.appendChild(promptSection);
+                    
+                    // Expected output section
+                    const expectedSection = document.createElement('div');
+                    expectedSection.className = 'test-case-section';
+                    const expectedLabel = document.createElement('div');
+                    expectedLabel.className = 'test-case-label';
+                    expectedLabel.textContent = '✅ Expected Output:';
+                    expectedSection.appendChild(expectedLabel);
+                    const expectedContent = document.createElement('div');
+                    expectedContent.className = 'test-case-content expected';
+                    expectedContent.textContent = testCase.expected_output || 'N/A';
+                    expectedSection.appendChild(expectedContent);
+                    testCaseDiv.appendChild(expectedSection);
+                    
+                    // Evaluation criteria section
+                    const criteriaSection = document.createElement('div');
+                    criteriaSection.className = 'test-case-section';
+                    const criteriaLabel = document.createElement('div');
+                    criteriaLabel.className = 'test-case-label';
+                    criteriaLabel.textContent = '📊 Evaluation Criteria:';
+                    criteriaSection.appendChild(criteriaLabel);
+                    const criteriaContent = document.createElement('div');
+                    criteriaContent.className = 'test-case-content criteria';
+                    criteriaContent.textContent = testCase.evaluation_criteria || 'N/A';
+                    criteriaSection.appendChild(criteriaContent);
+                    testCaseDiv.appendChild(criteriaSection);
+                    
+                    categorySection.appendChild(testCaseDiv);
                 });
+                
+                // Add copy all button for LLM tests
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'category-actions';
+                
+                const copyAllBtn = document.createElement('button');
+                copyAllBtn.className = 'copy-all-btn';
+                copyAllBtn.textContent = 'Copy All Test Cases';
+                copyAllBtn.onclick = () => copyLLMTestCases(category.test_cases, category.info.name);
+                actionsDiv.appendChild(copyAllBtn);
+                
+                categorySection.appendChild(actionsDiv);
+                
+            } else {
+                // ML format - table view
+                const table = document.createElement('table');
+                table.className = 'test-cases-table';
+                
+                // Header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                Object.keys(category.test_cases[0]).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key.replace(/_/g, ' ').toUpperCase();
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Body
+                const tbody = document.createElement('tbody');
+                category.test_cases.forEach(row => {
+                    const tr = document.createElement('tr');
+                    Object.values(row).forEach(value => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                
+                categorySection.appendChild(table);
+                
+                // Download button for ML category
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'action-btn';
+                downloadBtn.textContent = `Download ${category.info.name}`;
+                downloadBtn.style.marginTop = '10px';
+                downloadBtn.onclick = () => downloadCategoryCSV(category.test_cases, categoryKey, modelSelect.value);
+                categorySection.appendChild(downloadBtn);
+            }
+        } else if (category.error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = '#e53e3e';
+            errorDiv.style.padding = '10px';
+            errorDiv.textContent = category.error;
+            categorySection.appendChild(errorDiv);
+        }
+        
+        messageDiv.appendChild(categorySection);
+    });
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+    function copyLLMTestCases(testCases, categoryName) {
+        let text = `${categoryName}\n${'='.repeat(categoryName.length)}\n\n`;
+        
+        testCases.forEach((testCase, index) => {
+            text += `Test Case ${index + 1}: ${testCase.test_name}\n`;
+            text += `Severity: ${testCase.severity}\n`;
+            text += `\nPrompt:\n${testCase.prompt}\n`;
+            text += `\nExpected Output:\n${testCase.expected_output}\n`;
+            text += `\nEvaluation Criteria:\n${testCase.evaluation_criteria}\n`;
+            text += `\n${'-'.repeat(80)}\n\n`;
+        });
+        
+        navigator.clipboard.writeText(text).then(() => {
+            alert('All test cases copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy test cases');
+        });
+    }
+
+    async function downloadCategoryCSV(testCases, categoryName, modelName) {
+        try {
+            const response = await fetch("{{ url_for('tcg.download_test_cases') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    test_cases: testCases,
+                    model_name: `${modelName}_${categoryName}`,
+                    column_order: Object.keys(testCases[0] || {})
+                })
             });
 
-            observer.observe(document.getElementById('chat-messages'), { childList: true, subtree: true });
+            if (!response.ok) throw new Error('Download failed');
 
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${modelName}_${categoryName}_test_cases.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Failed to download test cases');
+        }
+    }
         
     </script>
 </body>

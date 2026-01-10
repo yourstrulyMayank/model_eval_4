@@ -546,115 +546,232 @@
             </div>
         </div>
     </div>
+<div id="benchmarks-tab" class="tab-content">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>Overall Score</h4>
+            <div class="value">{{ model_details.get('benchmarks', {}).get('overall_score', 88) }}%</div>
+        </div>
+        <div class="stat-card">
+            <h4>Primary Metric</h4>
+            <div class="value">{{ model_details.get('benchmarks', {}).get('primary_metric', 0.88) }}</div>
+        </div>
+    </div>
 
-    <div id="benchmarks-tab" class="tab-content">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h4>Overall Score</h4>
-                <div class="value">{{ model_details.get('benchmarks', {}).get('overall_score', 88) }}%</div>
-            </div>
-            <div class="stat-card">
-                <h4>Primary Metric</h4>
-                <div class="value">{{ model_details.get('benchmarks', {}).get('primary_metric', 0.88) }}</div>
+    <div class="card">
+        <h3>Recorded Benchmarks vs Industry Standards</h3>
+        <p style="margin-bottom: 1rem; color: hsl(0, 0%, 52.3%);">
+            Metrics recorded in <code>details.json</code> compared against reference industry benchmarks.
+        </p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current Value</th>
+                    <th>Industry Standard</th>
+                    <th>Variance</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set industry_standards = {
+                    'r2_score': 0.75,
+                    'rmse': 0.20,
+                    'mae': 0.15,
+                    'accuracy': 0.85,
+                    'precision': 0.85,
+                    'recall': 0.80,
+                    'f1_score': 0.85,
+                    'auc_roc': 0.85
+                } %}
+
+                {% for key, val in model_details.get('benchmarks', {}).items() %}
+                {% if key not in ['overall_score', 'tests_passed', 'primary_metric'] %}
+                {% set industry_val = industry_standards.get(key, 'N/A') %}
+
+                {% if industry_val != 'N/A' %}
+                    {% set variance = ((val - industry_val) / industry_val * 100) if val is number else 0 %}
+                    {% set meets_standard = (variance >= 0 and key not in ['rmse', 'mae']) or (variance <= 0 and key in ['rmse', 'mae']) %}
+                {% else %}
+                    {% set variance = 0 %}
+                    {% set meets_standard = True %}
+                {% endif %}
+
+                <tr>
+                    <td style="text-transform: capitalize; font-weight: 600;">
+                        {{ key.replace('_', ' ') }}
+                    </td>
+                    <td style="font-family: monospace;">
+                        {{ "%.4f"|format(val) if val is number else val }}
+                    </td>
+                    <td style="font-family: monospace; color: hsl(221.2, 83.2%, 53.3%);">
+                        {{ "%.4f"|format(industry_val) if industry_val != 'N/A' else 'N/A' }}
+                    </td>
+                    <td style="font-family: monospace;">
+                        {% if industry_val != 'N/A' %}
+                            <span style="color: {{ 'hsl(140, 100%, 27%)' if meets_standard else 'hsl(0, 92%, 45%)' }};">
+                                {{ '%+.2f'|format(variance) }}%
+                            </span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if industry_val == 'N/A' %}
+                            <span class="badge badge-success">Recorded</span>
+                        {% elif meets_standard %}
+                            <span class="badge badge-success">Meets Standard</span>
+                        {% else %}
+                            <span class="badge badge-warning">Below Standard</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: hsl(210, 40%, 98%); border-left: 4px solid hsl(221.2, 83.2%, 53.3%); border-radius: 0.375rem;">
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: hsl(0, 0%, 30%);">
+                Industry Standard Notes
+            </h4>
+            <p style="font-size: 0.85rem; line-height: 1.6; color: hsl(0, 0%, 40%); margin: 0;">
+                Industry benchmarks shown are indicative reference values commonly observed in
+                {{ model_details.get('model_info', {}).get('problem_type', 'ML') }}
+                models within financial services and risk analytics.
+                <br><br>
+                For regression models, RMSE and MAE thresholds assume normalized or bounded target variables;
+                lower values indicate better performance.
+                <br>
+                For classification models, higher values for AUC, F1, Precision, and Recall are preferred.
+                Accuracy is included for reference only and may be misleading in class-imbalanced datasets.
+                <br><br>
+                Variance reflects directional comparison against benchmarks; formal model promotion decisions
+                should rely on holistic Model Risk Management (MRM) review rather than single-metric thresholds.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div id="comparison-tab" class="tab-content">
+    <div class="card">
+        <h3>Champion vs Challenger</h3>
+        <p style="margin-bottom: 1rem; color: hsl(0, 0%, 52.3%);">
+            Compare the current Production model (Champion) against a new candidate uploaded to memory.
+        </p>
+    </div>
+
+    <div class="comparison-grid">
+        <div class="model-comparison champion">
+            <h4>🏆 Champion (Production)</h4>
+            <div class="data-grid" style="grid-template-columns: 1fr;">
+                <div class="detail-item">
+                    <h4>Version</h4>
+                    <p>{{ model_details.get('version', 'v1.0.0') }}</p>
+                </div>
+
+                {% set all_metrics = [
+                    'r2_score', 'rmse', 'mae', 'mse',
+                    'accuracy', 'precision', 'recall',
+                    'f1_score', 'auc_roc', 'log_loss',
+                    'balanced_accuracy', 'cohen_kappa'
+                ] %}
+
+                {% for key in all_metrics %}
+                    {% set val = model_details.get('benchmarks', {}).get(key) %}
+                    {% if val %}
+                    <div class="detail-item">
+                        <h4>{{ key.replace('_', ' ').title() }}</h4>
+                        <p id="champ-{{ key }}">{{ "%.4f"|format(val) if val is number else val }}</p>
+                    </div>
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
 
-        <div class="card">
-            <h3>Recorded Benchmarks</h3>
-            <p style="margin-bottom: 1rem; color: hsl(0, 0%, 52.3%);">Metrics recorded in <code>details.json</code> from the latest evaluation.</p>
+        <div class="model-comparison challenger">
+            <h4>⚡ Challenger (Candidate)</h4>
+
+            <form id="memoryEvalForm" onsubmit="handleMemoryEval(event)"
+                  style="margin-bottom: 1.5rem; background: hsl(0,0%,98%);
+                         padding: 1rem; border-radius: 0.5rem;
+                         border:1px solid hsl(0,0%,90%);">
+                <div class="form-group">
+                    <label style="font-size: 0.8rem;">
+                        Upload Challenger Model (.pkl) – Memory Only
+                    </label>
+                    <input type="file" name="model_file"
+                           class="form-control" accept=".pkl" required>
+                </div>
+                <button type="submit" class="btn-primary" id="memEvalBtn">
+                    Evaluate Candidate
+                </button>
+            </form>
+
+            <div id="challenger-results" style="display: none;">
+                <div class="data-grid" style="grid-template-columns: 1fr;"
+                     id="challenger-metrics-grid">
+                </div>
+            </div>
+
+            <div id="no-challenger-msg"
+                 style="text-align: center; padding: 3rem 1rem;
+                        color: hsl(0, 0%, 52.3%);">
+                <p>Upload a challenger model to see metrics comparison</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="detailed-comparison"
+         style="margin-top: 2rem; display: none;">
+        <h3>Detailed Metrics Comparison</h3>
+        <div style="overflow-x: auto;">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Metric</th>
-                        <th>Current Value</th>
-                        <th>Status</th>
+                        <th>Champion</th>
+                        <th>Challenger</th>
+                        <th>Absolute Diff</th>
+                        <th>% Change</th>
+                        <th>Winner</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for key, val in model_details.get('benchmarks', {}).items() %}
-                    {% if key not in ['overall_score', 'tests_passed', 'primary_metric'] %}
-                    <tr>
-                        <td style="text-transform: capitalize;">{{ key.replace('_', ' ') }}</td>
-                        <td>{{ val }}</td>
-                        <td><span class="badge badge-success">Recorded</span></td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
+                <tbody id="detailed-comparison-body"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="comparison-tab" class="tab-content">
-        <div class="card">
-            <h3>Champion vs Challenger</h3>
-            <p style="margin-bottom: 1rem; color: hsl(0, 0%, 52.3%);">
-                Compare the current Production model (Champion) against a new candidate uploaded to memory.
+    <div class="card" style="margin-top: 2rem;">
+        <h3>Production Risk Assessment</h3>
+
+        <div class="risk-matrix">
+            <div class="risk-cell risk-low">Model Drift Risk<br>LOW</div>
+            <div class="risk-cell risk-med">Data Quality Risk<br>MEDIUM</div>
+            <div class="risk-cell risk-low">Regulatory Risk<br>LOW</div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+            <h4>Risk Statement</h4>
+            <p style="line-height: 1.6; color: hsl(0, 0%, 30%);
+                      font-size: 0.9rem;">
+                The current Champion model version
+                <strong>{{ model_details.get('version') }}</strong>
+                operates within defined risk tolerance levels.
+                Data validation flags potential test-set outliers,
+                contributing to a MEDIUM Data Quality risk.
+                Regulatory Risk remains LOW in alignment with SR 11-7
+                model governance expectations.
+                Any Challenger model exhibiting material degradation
+                (e.g., >5% adverse variance in RMSE or AUC)
+                should trigger a full Model Risk Management (MRM) review
+                prior to production promotion.
             </p>
         </div>
-
-        <div class="comparison-grid">
-            <div class="model-comparison champion">
-                <h4>🏆 Champion (Production)</h4>
-                <div class="data-grid" style="grid-template-columns: 1fr;">
-                    <div class="detail-item">
-                        <h4>Version</h4>
-                        <p>{{ model_details.get('version', 'v1.0.0') }}</p>
-                    </div>
-                    {% for key, val in model_details.get('benchmarks', {}).items() %}
-                    {% if key in ['r2_score', 'rmse', 'mae', 'accuracy', 'precision', 'f1_score'] %}
-                    <div class="detail-item">
-                        <h4>{{ key }}</h4>
-                        <p id="champ-{{ key }}">{{ val }}</p>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="model-comparison challenger">
-                <h4>⚡ Challenger (Candidate)</h4>
-                
-                <form id="memoryEvalForm" onsubmit="handleMemoryEval(event)" style="margin-bottom: 1.5rem; background: hsl(0,0%,98%); padding: 1rem; border-radius: 0.5rem; border:1px solid hsl(0,0%,90%);">
-                    <div class="form-group">
-                        <label style="font-size: 0.8rem;">Upload Challenger Model (.pkl) - Memory Only</label>
-                        <input type="file" name="model_file" class="form-control" accept=".pkl" required>
-                    </div>
-                    <button type="submit" class="btn-primary" id="memEvalBtn">Evaluate Candidate</button>
-                </form>
-
-                <div id="challenger-results" style="display: none;">
-                    <div class="data-grid" style="grid-template-columns: 1fr;" id="challenger-metrics-grid">
-                        </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-top: 2rem;">
-            <h3>Production Risk Assessment</h3>
-            <div class="risk-matrix">
-                <div class="risk-cell risk-low">
-                    Model Drift Risk<br>LOW
-                </div>
-                <div class="risk-cell risk-med">
-                    Data Quality Risk<br>MEDIUM
-                </div>
-                <div class="risk-cell risk-low">
-                    Regulatory Risk<br>LOW
-                </div>
-            </div>
-            
-            <div style="margin-top: 1.5rem;">
-                <h4>Risk Statement</h4>
-                <p style="line-height: 1.6; color: hsl(0, 0%, 30%); font-size: 0.9rem;">
-                    The current Champion model version <strong>{{ model_details.get('version') }}</strong> operates within defined risk tolerance levels. 
-                    The data validation flags potential outliers in the test set which contributes to a MEDIUM Data Quality risk. 
-                    However, the Regulatory Risk remains LOW as per SR 11-7 compliance checks. 
-                    Any Challenger model showing >5% variance in RMSE/Accuracy should trigger a full Model Risk Management (MRM) review before promotion.
-                </p>
-            </div>
-        </div>
     </div>
+</div>
+
     
     <button onclick="window.history.back()" style="padding: 0.5rem 1rem; margin-top: 2rem; border-radius: 0.375rem; background: hsl(221.2, 83.2%, 53.3%); color: white; border: none; font-size: 0.875rem; font-weight: 600; cursor: pointer;">
         ← Back
@@ -744,71 +861,119 @@
 
     // --- Memory Evaluation (Comparison Logic) ---
     async function handleMemoryEval(e) {
-        e.preventDefault();
-        const btn = document.getElementById('memEvalBtn');
-        const formData = new FormData(e.target);
-        const container = document.getElementById('challenger-metrics-grid');
-        const resultsArea = document.getElementById('challenger-results');
+    e.preventDefault();
+    const btn = document.getElementById('memEvalBtn');
+    const formData = new FormData(e.target);
+    const container = document.getElementById('challenger-metrics-grid');
+    const resultsArea = document.getElementById('challenger-results');
+    const noMsgArea = document.getElementById('no-challenger-msg');
+    const detailedComparison = document.getElementById('detailed-comparison');
+    const detailedBody = document.getElementById('detailed-comparison-body');
+    
+    btn.disabled = true;
+    btn.textContent = 'Evaluating...';
+    
+    try {
+        const res = await fetch(`/api/evaluate_memory_model/${MODEL_NAME}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
         
-        btn.disabled = true;
-        btn.textContent = 'Evaluating...';
-        
-        try {
-            const res = await fetch(`/api/evaluate_memory_model/${MODEL_NAME}`, {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
+        if (data.status === 'success') {
+            container.innerHTML = '';
+            resultsArea.style.display = 'block';
+            if (noMsgArea) noMsgArea.style.display = 'none';
+            detailedComparison.style.display = 'block';
+            detailedBody.innerHTML = '';
             
-            if (data.status === 'success') {
-                container.innerHTML = '';
-                resultsArea.style.display = 'block';
+            // All metrics to display
+            const allMetrics = ['r2_score', 'rmse', 'mae', 'mse', 'accuracy', 'precision', 'recall', 'f1_score', 
+                               'auc_roc', 'log_loss', 'balanced_accuracy', 'cohen_kappa', 'precision_weighted', 
+                               'recall_weighted', 'f1_weighted'];
+            
+            // Metrics where lower is better
+            const lowerIsBetter = ['rmse', 'mae', 'mse', 'log_loss'];
+            
+            // Key mapping for API vs UI names
+            const keyMap = {
+                'r2': 'r2_score', 
+                'precision_weighted': 'precision', 
+                'f1_weighted': 'f1_score',
+                'recall_weighted': 'recall'
+            };
+
+            for (const [apiKey, val] of Object.entries(data.metrics)) {
+                let uiKey = keyMap[apiKey] || apiKey;
                 
-                // Metrics to display
-                const targetMetrics = ['r2_score', 'rmse', 'mae', 'accuracy', 'precision_weighted', 'f1_weighted'];
-                // Mappings for UI keys vs API keys
-                const keyMap = {
-                    'r2': 'r2_score', 'precision_weighted': 'precision', 'f1_weighted': 'f1_score'
-                };
-
-                for (const [apiKey, val] of Object.entries(data.metrics)) {
-                    // Check if this metric is interesting
-                    // Handle mismatched naming (e.g. API returns 'r2', UI wants 'r2_score')
-                    let uiKey = keyMap[apiKey] || apiKey;
+                if (allMetrics.includes(uiKey) || allMetrics.includes(apiKey)) {
+                    let displayVal = typeof val === 'number' ? val.toFixed(4) : val;
                     
-                    if (targetMetrics.includes(uiKey) || targetMetrics.includes(apiKey)) {
-                        let displayVal = typeof val === 'number' ? val.toFixed(4) : val;
+                    // Get champion value
+                    let champVal = null;
+                    const champEl = document.getElementById(`champ-${uiKey}`);
+                    if (champEl) champVal = parseFloat(champEl.innerText);
+                    
+                    // Calculate delta
+                    let deltaHtml = '';
+                    let percentChange = 0;
+                    let absDiff = 0;
+                    
+                    if (champVal !== null && typeof val === 'number') {
+                        absDiff = val - champVal;
+                        percentChange = champVal !== 0 ? (absDiff / champVal * 100) : 0;
                         
-                        // Try to find champion value for Delta calculation
-                        let champVal = null;
-                        const champEl = document.getElementById(`champ-${uiKey}`);
-                        if (champEl) champVal = parseFloat(champEl.innerText);
+                        // Determine if improvement (depends on metric type)
+                        let isImprovement = lowerIsBetter.includes(uiKey) ? absDiff < 0 : absDiff > 0;
+                        const color = isImprovement ? 'hsl(140, 100%, 27%)' : 'hsl(0, 92%, 45%)';
                         
-                        let deltaHtml = '';
-                        if (champVal !== null && typeof val === 'number') {
-                            const diff = val - champVal;
-                            const color = diff > 0 ? 'hsl(140, 100%, 27%)' : 'hsl(0, 92%, 45%)'; // Naive coloring
-                            deltaHtml = `<span style="color:${color}; font-size:0.8rem; margin-left:0.5rem;">(${diff > 0 ? '+' : ''}${diff.toFixed(4)})</span>`;
-                        }
+                        deltaHtml = `<span style="color:${color}; font-size:0.8rem; margin-left:0.5rem;">(${absDiff > 0 ? '+' : ''}${absDiff.toFixed(4)})</span>`;
+                    }
 
-                        container.innerHTML += `
-                            <div class="detail-item">
-                                <h4>${uiKey}</h4>
-                                <p>${displayVal} ${deltaHtml}</p>
-                            </div>
+                    // Add to grid
+                    container.innerHTML += `
+                        <div class="detail-item">
+                            <h4>${uiKey.replace(/_/g, ' ').toUpperCase()}</h4>
+                            <p>${displayVal} ${deltaHtml}</p>
+                        </div>
+                    `;
+                    
+                    // Add to detailed comparison table
+                    if (champVal !== null && typeof val === 'number') {
+                        let isImprovement = lowerIsBetter.includes(uiKey) ? absDiff < 0 : absDiff > 0;
+                        let winner = absDiff === 0 ? 'Tie' : (isImprovement ? 'Challenger' : 'Champion');
+                        let winnerColor = winner === 'Challenger' ? 'hsl(140, 100%, 27%)' : 
+                                         winner === 'Champion' ? 'hsl(31, 92%, 45%)' : 'hsl(0, 0%, 52.3%)';
+                        
+                        detailedBody.innerHTML += `
+                            <tr>
+                                <td style="font-weight: 600;">${uiKey.replace(/_/g, ' ').toUpperCase()}</td>
+                                <td style="font-family: monospace;">${champVal.toFixed(4)}</td>
+                                <td style="font-family: monospace;">${displayVal}</td>
+                                <td style="font-family: monospace; color: ${absDiff >= 0 ? 'hsl(140, 100%, 27%)' : 'hsl(0, 92%, 45%)'};">
+                                    ${absDiff > 0 ? '+' : ''}${absDiff.toFixed(4)}
+                                </td>
+                                <td style="font-family: monospace; color: ${percentChange >= 0 ? 'hsl(140, 100%, 27%)' : 'hsl(0, 92%, 45%)'};">
+                                    ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)}%
+                                </td>
+                                <td style="font-weight: 600; color: ${winnerColor};">
+                                    ${winner}
+                                </td>
+                            </tr>
                         `;
                     }
                 }
-            } else {
-                alert('Evaluation Error: ' + data.error);
             }
-        } catch (err) {
-            alert('Error: ' + err);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Evaluate Candidate';
+        } else {
+            alert('Evaluation Error: ' + data.error);
         }
+    } catch (err) {
+        alert('Error: ' + err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Evaluate Candidate';
     }
+}
     
     // Resize script handles itself via onload attribute
 </script>
