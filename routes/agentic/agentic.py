@@ -44,9 +44,9 @@ def process_agentic_request():
         - TOOLS: Test Case Generation, Result Summarization.
 
         AVAILABLE MODELS:
-        - "Capital Risk" (ML)
-        - "Compliance Assist" (LLM)
-        - "Wealth Assist" (LLM)
+        - "capital_risk" (ML)
+        - "compliance_model" (LLM)
+        - "wealth_advisory_model" (LLM)
         - "FRTB-SA" (Risk)
 
         User request: "{user_message}"
@@ -69,6 +69,12 @@ def process_agentic_request():
 
         intent = json.loads(json_match.group())
         m_name = intent.get('model_name', '')
+        name_map = {
+            "compliance assist": "compliance_model",
+            "wealth assist": "wealth_advisory_model"
+        }
+        m_name = name_map.get(m_name.lower(), m_name)
+        
         m_type = intent.get('model_type')
         mode = intent.get('eval_mode', 'standard')
 
