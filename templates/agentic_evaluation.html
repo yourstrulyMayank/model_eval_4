@@ -371,7 +371,7 @@
             addMessage(`✅ Test cases generated for ${modelName}. You can now proceed with custom evaluation. The evaluation page will open in a new tab.`, 'agent');
 
             // Open the custom evaluation page in a new tab
-            window.open(`/custom_ml/${modelName}/supervised`, '_blank');
+            window.open(`/custom_evaluate_ml/${modelName}`, '_blank');
 
             // After a delay, ask if the user wants a summary
             setTimeout(() => {

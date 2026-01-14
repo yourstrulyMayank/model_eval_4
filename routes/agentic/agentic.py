@@ -150,59 +150,122 @@ def process_agentic_request():
 
 @agentic_bp.route('/agentic_generate_testcases/<model_name>', methods=['POST'])
 def agentic_generate_testcases(model_name):
-    """Generate test cases automatically for agentic ML evaluation"""
+    """Generate test cases across ALL categories and combine them into one table for ML evaluation"""
     try:
-        model_info = get_model_data_from_uploads(model_name)
+        print(f"\n{'='*60}")
+        print(f"Starting test case generation for: {model_name}")
+        print(f"{'='*60}\n")
+        
+        # Determine if it's an existing model and if it's an LLM
+        is_existing_llm = model_name in ['Compliance Assist', 'Wealth Assist']
+        
+        print(f"Model type: {'LLM' if is_existing_llm else 'ML'}")
+        
+        model_info = get_model_data_from_uploads('Capital Risk', is_llm=is_existing_llm)
         if not model_info:
+            print(f"❌ Error: Model data not found for {model_name}\n")
             return jsonify({'error': f'Model data not found for {model_name}'}), 400
+            
+        # ML models must have test_format
+        if not is_existing_llm and 'test_format' not in model_info:
+            print(f"❌ Error: Test format data not found for {model_name}\n")
+            return jsonify({'error': f'Test format data not found for {model_name}'}), 400
 
+        print(f"✓ Model data loaded successfully")
+        
         model_card_text = model_info['model_card']
         test_format_info = model_info['test_format']
+        all_combined_test_cases = []
+        
+        total_categories = len(ML_TEST_CATEGORIES)
+        print(f"✓ Processing {total_categories} categories\n")
 
-        prompt = f"""Generate 10 comprehensive test cases for {model_name} model.
+        # Iterate through all categories defined in the test_case_generation script
+        for idx, (category_key, category_info) in enumerate(ML_TEST_CATEGORIES.items(), 1):
+            print(f"[{idx}/{total_categories}] Generating test cases for: {category_info['name']}")
+            print(f"    Focus areas: {', '.join(category_info['focus_areas'])}")
+            
+            prompt = f"""You are a test case generation assistant for the ML model: {model_name}
 
-        Model Information:
-        {model_card_text[:1500]}
+Model Information:
+{model_card_text[:1500]}
 
-        Test Case Format:
-        Columns: {', '.join(test_format_info['columns'])}
+Test Case Format:
+Columns: {', '.join(test_format_info['columns'])}
 
-        Sample Test Cases:
-        {json.dumps(test_format_info['sample_data'], indent=2)}
+Sample Test Cases:
+{json.dumps(test_format_info['sample_data'], indent=2)}
 
-        Generate 2 diverse test cases covering edge cases and normal scenarios.
-        Return ONLY a valid JSON array of objects with the exact column names, no other text.
+Category: {category_info['name']}
+Description: {category_info['description']}
+Focus Areas: {', '.join(category_info['focus_areas'])}
 
-        Example format:
-        [{{"column1": "value1", "column2": "value2"}}, ...]"""
+Generate 5 test cases for this category in the EXACT same format as the samples above. MAINTAIN COLUMN ORDER.
+IMPORTANT: Return ONLY a valid JSON array of objects with the exact column names. Do not include any explanation or markdown."""
 
-        llm_response = call_ollama_llm(prompt, model="llama3.2")
-        import re
-        json_match = re.search(r'\[.*\]', llm_response, re.DOTALL)
-        if not json_match:
-            return jsonify({'error': 'Failed to generate test cases'}), 500
+            print(f"    Calling LLM...")
+            llm_response = call_ollama_llm(prompt, model="llama3.2")
+            
+            import re
+            json_match = re.search(r'\[.*\]', llm_response, re.DOTALL)
+            if json_match:
+                try:
+                    category_cases = json.loads(json_match.group())
+                    
+                    # Ensure each test case follows the correct column order
+                    ordered_cases = [
+                        OrderedDict((col, case.get(col, "")) for col in test_format_info['columns'])
+                        for case in category_cases
+                    ]
+                    
+                    all_combined_test_cases.extend(ordered_cases)
+                    print(f"    ✓ Generated {len(ordered_cases)} test cases")
+                    print(f"    Total test cases so far: {len(all_combined_test_cases)}\n")
+                except Exception as e:
+                    print(f"    ❌ Error parsing category {category_key}: {e}\n")
+                    continue
+            else:
+                print(f"    ❌ Failed to extract JSON from LLM response\n")
 
-        test_cases = json.loads(json_match.group())
+        if not all_combined_test_cases:
+            print(f"❌ Failed to generate any valid test cases across categories\n")
+            return jsonify({'error': 'Failed to generate any valid test cases across categories'}), 500
 
-        # Save as test.csv in uploads/<model_name> folder
-        upload_dir = os.path.join(UPLOAD_FOLDER, ('_').join(model_name.lower().split()))
+        print(f"\n{'='*60}")
+        print(f"Test case generation complete!")
+        print(f"Total test cases generated: {len(all_combined_test_cases)}")
+        print(f"{'='*60}\n")
+
+        # Create combined DataFrame with proper column ordering
+        print("Creating DataFrame and ensuring column order...")
+        df = pd.DataFrame(all_combined_test_cases)
+        
+        # Ensure column order matches the model's required format
+        ordered_columns = [col for col in test_format_info['columns'] if col in df.columns]
+        df = df[ordered_columns]
+        print(f"✓ DataFrame created with {len(df)} rows and {len(ordered_columns)} columns")
+
+        # Save to the specific model folder for the custom evaluation route
+        model_folder_name = model_name.lower().replace(' ', '_')
+        upload_dir = os.path.join(UPLOAD_FOLDER, model_folder_name)
         os.makedirs(upload_dir, exist_ok=True)
-
-        df = pd.DataFrame(test_cases)
-        if test_format_info['columns']:
-            ordered_columns = [col for col in test_format_info['columns'] if col in df.columns]
-            df = df[ordered_columns]
 
         csv_path = os.path.join(upload_dir, 'test.csv')
         df.to_csv(csv_path, index=False)
+        
+        print(f"✓ Test cases saved to: {csv_path}")
+        print(f"{'='*60}\n")
 
         return jsonify({
             'status': 'success',
             'csv_path': csv_path,
-            'test_cases_count': len(test_cases)
+            'test_cases_count': len(all_combined_test_cases),
+            'categories_processed': list(ML_TEST_CATEGORIES.keys()),
+            'columns': ordered_columns
         })
 
     except Exception as e:
+        print(f"\n❌ FATAL ERROR: {str(e)}\n")
         return jsonify({'error': str(e)}), 500
 
 @agentic_bp.route('/agentic_summarize_results/<model_type>/<model_name>', methods=['POST'])
