@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import re
 from routes.test_case_generation.test_case_generation import call_ollama_llm, get_model_data_from_uploads
+import shutil
 
 agentic_bp = Blueprint('agentic', __name__)
 UPLOAD_FOLDER = 'uploads'
@@ -11,6 +12,32 @@ UPLOAD_FOLDER = 'uploads'
 def agentic_evaluation():
     return render_template('agentic_evaluation.html')
 
+@agentic_bp.route('/execute-ml-with-testcases', methods=['POST'])
+def execute_ml_with_testcases():
+    data = request.json
+    model_name = data.get('model_name') # e.g., 'capital_risk'
+    test_cases = data.get('test_cases') # The JSON from TCG
+    
+    try:
+        # 1. Convert JSON test cases to CSV
+        df = pd.DataFrame(test_cases)
+        target_dir = os.path.join('uploads', model_name)
+        os.makedirs(target_dir, exist_ok=True)
+        
+        # 2. Save as 'test.csv' (Standard naming for your ML module)
+        file_path = os.path.join(target_dir, 'test.csv')
+        df.to_csv(file_path, index=False)
+        
+        # 3. Trigger the ML Evaluation automatically
+        # Redirect the agent/UI to the custom ML page with an 'auto_run' flag
+        return jsonify({
+            'response': f'Test cases applied to {model_name}. Starting evaluation...',
+            'redirect_url': url_for('ml_s_c.custom_ml', model_name=model_name, auto_trigger=True)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+    
+    
 @agentic_bp.route('/process-agentic-request', methods=['POST'])
 def process_agentic_request():
     try:
