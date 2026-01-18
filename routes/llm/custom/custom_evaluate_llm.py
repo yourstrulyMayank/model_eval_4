@@ -54,7 +54,8 @@ EMBED_MODEL = SentenceTransformer("models/custom_embedding")
 # OLLAMA_URL = "http://localhost:11434"
 OLLAMA_MODEL = "mistral:7b"
 # CHROMA_DB_PATH = "./chroma_db"
-
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "6"
 # Global progress tracker
 progress_tracker = {}
 progress_lock = threading.Lock()
@@ -63,7 +64,7 @@ progress_lock = threading.Lock()
 cli = ollama_client(host='http://10.177.213.115:11434')
 
 # Global configuration
-EMBED_MODEL = SentenceTransformer("BAAI/bge-small-en-v1.5")
+EMBED_MODEL = SentenceTransformer("BAAI/bge-small-en-v1.5", device="cuda:0")
 #EMBED_MODEL = SentenceTransformer("models/custom_embedding")
 # OLLAMA_MODEL = "mistral:7b"
 CHROMA_DB_PATH = "./chroma_db"
@@ -232,7 +233,7 @@ def download_custom_excel(model_name):
                         'Model_Extracted': item['extracted'],
                         'Confidence_Score': item['score'],
                         'Test_Grade': item['grade'],
-                        'Status': 'Pass' if item['grade'] == 'âœ… Pass' else 'Fail'
+                        'Status': 'Pass' if item['grade'] == '✅ Pass' else 'Fail'
                     }
                     for item in comparison_data
                 ])
@@ -299,7 +300,7 @@ def update_progress(model_name, stage, message):
             'message': message,
             'timestamp': datetime.now().isoformat()
         })
-    print(f"ðŸ“Š Progress Update - {model_name}: Stage {stage} - {message}")
+    print(f"📊 Progress Update - {model_name}: Stage {stage} - {message}")
 
 
 def get_progress(model_name):
@@ -313,7 +314,7 @@ def clear_progress(model_name):
     with progress_lock:
         if model_name in progress_tracker:
             del progress_tracker[model_name]
-    print(f"ðŸ§¹ Cleared progress tracking for {model_name}")
+    print(f"🧹 Cleared progress tracking for {model_name}")
 
 
 # def get_embedding(text):
@@ -329,7 +330,7 @@ def clear_progress(model_name):
         # # # Delete existing collection if it exists
         # # try:
         # # client.delete_collection(collection_name)
-        # # print(f"ðŸ—‘ï¸ Deleted existing collection: {collection_name}")
+        # # print(f"🗑️ Deleted existing collection: {collection_name}")
         # # except:
         # # pass
 
@@ -470,7 +471,7 @@ def evaluate_texts(gt_text, pred_text):
     pred_word_count = len(pred_tokens)
 
     # Embedding similarity
-    embed_model = SentenceTransformer("all-mpnet-base-v2")
+    embed_model = SentenceTransformer("all-mpnet-base-v2", device="cuda:0")
     gt_emb = embed_model.encode(gt_clean, convert_to_tensor=True)
     pred_emb = embed_model.encode(pred_clean, convert_to_tensor=True)
     cosine_sim = util.pytorch_cos_sim(gt_emb, pred_emb).item()
@@ -535,8 +536,8 @@ def decide_pass_fail(row):
     }
     for metric, threshold in thresholds.items():
         if row[metric] < threshold:
-            return "âŒ Fail"
-    return "âœ… Pass"
+            return "❌ Fail"
+    return "✅ Pass"
 
 
 def failed_metrics(row):
@@ -571,7 +572,7 @@ def run_evaluation_on_dataframe(input_df):
 
 def run_custom_evaluation(model_name, model_path, upload_dir):
     """Main function to run custom RAG-based evaluation with NLP metrics"""
-    print(f"ðŸš€ Starting custom RAG evaluation for model: {model_name}")
+    print(f"🚀 Starting custom RAG evaluation for model: {model_name}")
 
     try:
         # Stage 1: Loading models and initializing
@@ -608,8 +609,8 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
         else:
             PDF_PATH = PDF_PATH_COMPLIANCE
 
-        print(f"ðŸ“ Using evaluation type: {eval_type}")
-        print(f"ðŸ“‚ Evaluation directory: {eval_dir}")
+        print(f"📁 Using evaluation type: {eval_type}")
+        print(f"📂 Evaluation directory: {eval_dir}")
 
         # Find PDF files and Excel ground truth
         pdf_files = glob.glob(os.path.join(eval_dir, "*.pdf"))
@@ -623,21 +624,21 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
         pdf_file = pdf_files[0]
         excel_file = excel_files[0]
 
-        print(f"ðŸ“„ Using PDF: {os.path.basename(pdf_file)}")
-        print(f"ðŸ“Š Using Excel: {os.path.basename(excel_file)}")
+        print(f"📄 Using PDF: {os.path.basename(pdf_file)}")
+        print(f"📊 Using Excel: {os.path.basename(excel_file)}")
 
         # Stage 2: Processing uploaded files and ingesting to ChromaDB
         update_progress(model_name, 2, "Processing files and creating vector database...")
 
         collection_name = f"{model_name}_{eval_type}".replace(" ", "_")
-        print("ðŸ“„ Extracting and chunking document...")
+        print("📄 Extracting and chunking document...")
         chunks = extract_text_chunks(PDF_PATH)
 
-        print("ðŸ”— Embedding chunks...")
+        print("🔗 Embedding chunks...")
         embed_model = EMBED_MODEL
         embeddings = embed_chunks(chunks, embed_model)
 
-        print("ðŸ“š Creating FAISS index...")
+        print("📚 Creating FAISS index...")
         index = create_faiss_index(embeddings)
 
         # Stage 3: Loading ground truth and running queries
@@ -654,7 +655,7 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
         if 'Prompt' not in df_ground_truth.columns or 'GroundTruth' not in df_ground_truth.columns:
             raise Exception("Excel file must contain 'Prompt' and 'GroundTruth' columns")
 
-        print(f"ðŸ“‹ Loaded {len(df_ground_truth)} prompts from ground truth")
+        print(f"📋 Loaded {len(df_ground_truth)} prompts from ground truth")
 
         # Stage 4: Analyzing content and generating responses
         update_progress(model_name, 4, "Analyzing content and generating responses...")
@@ -676,7 +677,7 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
                 # Query the RAG system
                 # extracted_answer = query_documents(prompt, collection_name)
                 top_chunks = search_chunks(index, prompt, embed_model, chunks)
-                print("ðŸ¤– Querying Mistral via Ollama...")
+                print("🤖 Querying Mistral via Ollama...")
                 extracted_answer = query_ollama(prompt, top_chunks)
                 # Calculate similarity score
                 score = calculate_similarity_score(ground_truth, extracted_answer)
@@ -696,7 +697,7 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
                     'Predicted': f"Error: {str(e)}",
                     'extracted': f"Error: {str(e)}",
                     'score': 0.0,
-                    'grade': 'âŒ Fail'
+                    'grade': '❌ Fail'
 
                 })
 
@@ -739,17 +740,17 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
 
         # Calculate summary statistics
         total_tests = len(results)
-        pass_count = len([r for r in results if r['grade'] == 'âœ… Pass'])
+        pass_count = len([r for r in results if r['grade'] == '✅ Pass'])
         # intermittent_count = 0  # Not used in new evaluation
-        intermittent_count = len([r for r in results if r['grade'] == 'âš  Intermittent'])
-        fail_count = len([r for r in results if r['grade'] == 'âŒ Fail'])
+        intermittent_count = len([r for r in results if r['grade'] == '⚠ Intermittent'])
+        fail_count = len([r for r in results if r['grade'] == '❌ Fail'])
 
         scores = [r['score'] for r in results]
         avg_score = sum(scores) / len(scores) if scores else 0
         overall_score = avg_score
         success_rate = (pass_count / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"ðŸ“ˆ Evaluation Summary:")
+        print(f"📈 Evaluation Summary:")
         print(f"   Total Tests: {total_tests}")
         print(f"   Passed: {pass_count} ({pass_count / total_tests * 100:.1f}%)")
         print(f"   Failed: {fail_count} ({fail_count / total_tests * 100:.1f}%)")
@@ -789,13 +790,13 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
         # Mark as completed
         update_progress(model_name, 7, "Evaluation completed successfully!")
 
-        print("ðŸŽ‰ Custom RAG evaluation with NLP metrics completed successfully!")
+        print("🎉 Custom RAG evaluation with NLP metrics completed successfully!")
         return final_results
 
     except Exception as e:
         error_msg = f"Evaluation failed: {str(e)}"
-        print(f"âŒ {error_msg}")
-        print("ðŸ” Full traceback:")
+        print(f"❌ {error_msg}")
+        print("🔍 Full traceback:")
         traceback.print_exc()
 
         update_progress(model_name, -1, f"Error: {error_msg}")
@@ -832,11 +833,11 @@ def calculate_similarity_score(actual, extracted):
 def grade_confidence(score):
     """Grade the confidence score"""
     if score >= 80:
-        return 'âœ… Pass'
+        return '✅ Pass'
     elif score >= 70:
-        return 'âš  Intermittent'
+        return '⚠ Intermittent'
     else:
-        return 'âŒ Fail'
+        return '❌ Fail'
 
 
 def extract_text_chunks(pdf_path):
