@@ -1,4 +1,4 @@
-# llm_custom_utils
+# new custom_evaluate_llm.py
 
 import os
 import pandas as pd
@@ -17,19 +17,16 @@ import threading
 progress_tracker = {}
 progress_lock = threading.Lock()
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
 # Load models
 print("🔄 Loading Donut and SentenceTransformer models...")
 processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-docvqa")
-donut_model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-docvqa").to(device)
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+donut_model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-docvqa")
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-#device = "cuda" if torch.cuda.is_available() else "cpu"
-#donut_model.to(device)
-#print(f"✅ Models loaded successfully on device: {device}")
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "6"
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
+donut_model.to(device)
+print(f"✅ Models loaded successfully on device: {device}")
 
 
 def update_progress(model_name, stage, message):
@@ -55,7 +52,7 @@ def clear_progress(model_name):
         if model_name in progress_tracker:
             del progress_tracker[model_name]
     print(f"🧹 Cleared progress tracking for {model_name}")
-
+    
 def extract_answer_from_image(image: Image.Image, prompt: str) -> str:
     """Use Donut to extract an answer from image given a prompt."""
     print(f"📄 Processing prompt: {prompt}")
@@ -193,7 +190,7 @@ def match_and_merge_results(merged_df, ground_truth_df):
 def evaluate_image_and_transactions(image_path, transaction_excel, ground_truth_excel):
     """Main evaluation function for image and transaction analysis."""
     print(f"🚀 Starting evaluation for image: {image_path}")
-
+    
     # Load and process image
     image = Image.open(image_path)
     prompts = [
@@ -224,7 +221,7 @@ def evaluate_image_and_transactions(image_path, transaction_excel, ground_truth_
     print(f"📊 Loading transaction data from: {transaction_excel}")
     trans_df = pd.read_excel(transaction_excel)
     print(f"📈 Loaded {len(trans_df)} transaction records")
-
+    
     trans_summary = generate_transaction_summary(trans_df)
 
     # Merge results
@@ -238,7 +235,7 @@ def evaluate_image_and_transactions(image_path, transaction_excel, ground_truth_
 
     # Match and evaluate
     final_df = match_and_merge_results(merged_df, gt_df)
-
+    
     print("🧮 Computing confidence scores...")
     final_df['Confidence_Score'] = final_df.apply(
         lambda r: compute_confidence(r['Actual'], r['Extracted']), axis=1
@@ -253,47 +250,47 @@ def evaluate_image_and_transactions(image_path, transaction_excel, ground_truth_
 def find_files_in_directory(upload_dir):
     """Find required files in the upload directory."""
     print(f"🔍 Scanning upload directory: {upload_dir}")
-
+    
     image_files = []
     transaction_files = []
     ground_truth_files = []
-
+    
     if not os.path.exists(upload_dir):
         print(f"❌ Upload directory does not exist: {upload_dir}")
         return None, None, None
-
+    
     for filename in os.listdir(upload_dir):
         filepath = os.path.join(upload_dir, filename)
         if os.path.isfile(filepath):
             lower_filename = filename.lower()
-
+            
             # Image files
             if any(ext in lower_filename for ext in ['.png', '.jpg', '.jpeg']):
                 image_files.append(filepath)
                 print(f"📸 Found image file: {filename}")
-
+            
             # Transaction files
             elif any(keyword in lower_filename for keyword in ['transaction', 'trans']) and \
                  any(ext in lower_filename for ext in ['.xlsx', '.xls', '.csv']):
                 transaction_files.append(filepath)
                 print(f"📊 Found transaction file: {filename}")
-
+            
             # Ground truth files
             elif any(keyword in lower_filename for keyword in ['ground', 'truth', 'gt']) and \
                  any(ext in lower_filename for ext in ['.xlsx', '.xls', '.csv']):
                 ground_truth_files.append(filepath)
                 print(f"📋 Found ground truth file: {filename}")
-
+    
     # Return first found file of each type
     image_file = image_files[0] if image_files else None
     transaction_file = transaction_files[0] if transaction_files else None
     ground_truth_file = ground_truth_files[0] if ground_truth_files else None
-
+    
     print(f"📁 File selection summary:")
     print(f"   Image: {os.path.basename(image_file) if image_file else 'None'}")
     print(f"   Transaction: {os.path.basename(transaction_file) if transaction_file else 'None'}")
     print(f"   Ground Truth: {os.path.basename(ground_truth_file) if ground_truth_file else 'None'}")
-
+    
     return image_file, transaction_file, ground_truth_file
 
 
@@ -302,20 +299,19 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
     """
     Main function to run custom evaluation - this is what app.py imports and calls.
     """
-    print('run_custom_eval started')
     print(f"🚀 Starting custom evaluation for model: {model_name}")
     print(f"📂 Model path: {model_path}")
     print(f"📁 Upload directory: {upload_dir}")
-
+    
     try:
         # Stage 1: Loading models and initializing
         update_progress(model_name, 1, "Loading models and initializing...")
-
+        
         # Use fixed file paths instead of dynamic discovery
         image_file = os.path.join(upload_dir,'bank_2.png')
         transaction_file = os.path.join(upload_dir,'transaction details.xlsx')
         ground_truth_file = os.path.join(upload_dir,'Ground_truth_data.xlsx')
-
+        
         # Validate required files exist
         missing_files = []
         if not os.path.exists(image_file):
@@ -324,7 +320,7 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
             missing_files.append(f"Transaction file: {transaction_file}")
         if not os.path.exists(ground_truth_file):
             missing_files.append(f"Ground truth file: {ground_truth_file}")
-
+        
         if missing_files:
             error_msg = f"Missing required files: {', '.join(missing_files)}"
             print(f"❌ {error_msg}")
@@ -334,25 +330,25 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
                 "files_processed": 0,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
-
+        
         # Stage 2: Processing uploaded files
         update_progress(model_name, 2, "Processing uploaded files...")
         print("✅ All required files found, starting evaluation...")
-
+        
         # Stage 3: Analyzing document content
         update_progress(model_name, 3, "Analyzing document content...")
-
+        
         # Run evaluation
         evaluation_df = evaluate_image_and_transactions(
-            image_file,
-            transaction_file,
+            image_file, 
+            transaction_file, 
             ground_truth_file
         )
-
+        
         # Stage 4: Comparing with ground truth
         update_progress(model_name, 4, "Comparing with ground truth...")
         print("📊 Processing evaluation results...")
-
+        
         # Calculate summary statistics
         total_tests = len(evaluation_df)
         pass_count = len(evaluation_df[evaluation_df['Test_case'] == '✅ Pass'])
@@ -360,17 +356,17 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
         fail_count = len(evaluation_df[evaluation_df['Test_case'] == '❌ Fail'])
         avg_score = evaluation_df['Confidence_Score'].mean()
         overall_score = avg_score
-
+        
         print(f"📈 Evaluation Summary:")
         print(f"   Total Tests: {total_tests}")
         print(f"   Passed: {pass_count} ({pass_count/total_tests*100:.1f}%)")
         print(f"   Intermittent: {intermittent_count} ({intermittent_count/total_tests*100:.1f}%)")
         print(f"   Failed: {fail_count} ({fail_count/total_tests*100:.1f}%)")
         print(f"   Average Score: {avg_score:.1f}%")
-
+        
         # Stage 5: Finalizing
         update_progress(model_name, 5, "Finalizing evaluation...")
-
+        
         # Convert DataFrame to list of dictionaries for JSON serialization
         ground_truth_comparison = []
         for _, row in evaluation_df.iterrows():
@@ -381,7 +377,7 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
                 'score': float(row['Confidence_Score']),
                 'grade': row['Test_case']
             })
-
+        
         # Prepare comprehensive results
         results = {
             "model_name": model_name,
@@ -407,21 +403,21 @@ def run_custom_evaluation(model_name, model_path, upload_dir):
                 "std_deviation": float(evaluation_df['Confidence_Score'].std())
             }
         }
-
+        
         # Mark as completed
         update_progress(model_name, 6, "Evaluation completed successfully!")
-
+        
         print("🎉 Custom evaluation completed successfully!")
         return results
-
+        
     except Exception as e:
         error_msg = f"Evaluation failed: {str(e)}"
         print(f"❌ {error_msg}")
         print("🔍 Full traceback:")
         traceback.print_exc()
-
+        
         update_progress(model_name, -1, f"Error: {error_msg}")
-
+        
         return {
             "error": error_msg,
             "files_processed": 0,
@@ -435,7 +431,7 @@ def get_custom_evaluation_history(model_name):
     """Get custom evaluation history for a model."""
     results_dir = "evaluation_results"
     results_file = os.path.join(results_dir, f"{model_name}_custom_evaluation.json")
-
+    
     if os.path.exists(results_file):
         try:
             with open(results_file, 'r') as f:
@@ -443,7 +439,7 @@ def get_custom_evaluation_history(model_name):
         except Exception as e:
             print(f"Error loading custom evaluation history: {e}")
             return {}
-
+    
     return {}
 
 
@@ -451,9 +447,9 @@ def save_evaluation_results(model_name, results):
     """Save evaluation results to file."""
     results_dir = "evaluation_results"
     os.makedirs(results_dir, exist_ok=True)
-
+    
     results_file = os.path.join(results_dir, f"{model_name}_custom_evaluation.json")
-
+    
     try:
         with open(results_file, 'w') as f:
             json.dump(results, f, indent=2)
@@ -467,7 +463,7 @@ def save_evaluation_results(model_name, results):
 if __name__ == "__main__":
     # Test function - can be used for standalone testing
     print("🧪 Running custom evaluation test...")
-
+    
     # Example usage:
     # results = run_custom_evaluation("test_model", "/path/to/model", "/path/to/uploads")
     # print(json.dumps(results, indent=2))

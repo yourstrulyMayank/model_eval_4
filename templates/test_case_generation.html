@@ -78,7 +78,7 @@
             box-shadow: 0 4px 16px rgba(233, 30, 99, 0.2);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            
+
         }
         .llm-test-case {
             background: white;
@@ -352,11 +352,11 @@
             border-radius: 16px;
             padding: 10px 15px;
             animation: fadeIn 0.3s ease;
-            max-width: 90%;          
+            max-width: 90%;
             width: 80%;
             overflow-y: auto;
             overflow-x: auto;
-            
+
         }
 
         .assistant-message.has-table {
@@ -550,6 +550,9 @@
             border-radius: 12px;
             padding: 20px;
             border: 1px solid rgba(102, 126, 234, 0.2);
+            width: min-content;
+            min-width: 100%;
+            box-sizing: border-box;
         }
 
         .category-header {
@@ -581,7 +584,7 @@
             color: #2d3748;
         }
 
-        
+
     </style>
 </head>
 <body>
@@ -598,7 +601,7 @@
         <!-- Left Panel -->
         <div class="left-panel">
             <h2>Configuration</h2>
-            
+
             <div class="dropdown-section">
                 <label for="model-select" >Select an Existing Model:</label>
                 <select id="model-select" class="model-dropdown">
@@ -622,13 +625,13 @@
                 <p style="font-size: 14px; color: #4a5568; margin-bottom: 15px; text-align: center;">
                     Upload files for a new model
                 </p>
-                
+
                 <input type="file" id="model-card-input" class="file-input" accept=".pdf">
                 <button class="upload-btn" onclick="document.getElementById('model-card-input').click()">
                     Choose a Model Card
                 </button>
                 <div class="file-name" id="model-card-name">No file selected</div>
-                
+
                 <div style="margin-top: 20px;">
                     <input type="file" id="test-format-input" class="file-input" accept=".csv,.xlsx,.xls">
                     <button class="upload-btn" onclick="document.getElementById('test-format-input').click()">
@@ -646,7 +649,7 @@
         <!-- Right Panel - Chat -->
         <div class="right-panel">
             <div class="chat-header">Test Case Generation Assistant</div>
-            
+
             <div class="chat-messages" id="chat-messages">
                 <div class="message assistant-message">
                     Hello! I'm your test case generation assistant. Select a model from the dropdown and ask me to generate test cases for it.
@@ -654,10 +657,10 @@
             </div>
 
             <div class="chat-input-container">
-                <input 
-                    type="text" 
-                    id="chat-input" 
-                    class="chat-input" 
+                <input
+                    type="text"
+                    id="chat-input"
+                    class="chat-input"
                     placeholder="Ask me to generate test cases..."
                     onkeypress="handleKeyPress(event)"
                 >
@@ -675,7 +678,7 @@
         const testFormatInput = document.getElementById('test-format-input');
         const modelCardName = document.getElementById('model-card-name');
         const testFormatName = document.getElementById('test-format-name');
-        
+
         let currentTableData = [];
         let currentColumnOrder = [];
 
@@ -722,7 +725,7 @@
 
                 if (data.success) {
                     alert('Model uploaded successfully! Model name: ' + data.model_name);
-                    
+
                     // Add new model to dropdown
                     const option = document.createElement('option');
                     option.value = data.model_name;
@@ -735,15 +738,15 @@
                     testFormatInput.value = '';
                     modelCardName.textContent = 'No file selected';
                     testFormatName.textContent = 'No file selected';
-                    
+
                     modelSelect.addEventListener('change', function(e) {
                     const selectedModel = e.target.value;
                     const modelTypeSelect = document.getElementById('model-type-select');
-                    
+
                     // Auto-select model type based on existing models
                     const llmModels = ['Compliance Assist', 'Wealth Assist'];
                     const mlModels = ['Capital Risk'];
-                    
+
                     if (llmModels.includes(selectedModel)) {
                         modelTypeSelect.value = 'llm';
                         modelTypeSelect.disabled = true;
@@ -778,20 +781,20 @@
         function addMessage(text, isUser, tableData = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
-            
+
             if (tableData && tableData.length > 0) {
                 messageDiv.classList.add('has-table');
-                
+
                 // Add text before table
                 const textDiv = document.createElement('div');
                 textDiv.textContent = text;
                 textDiv.style.marginBottom = '15px';
                 messageDiv.appendChild(textDiv);
-                
+
                 // Create table
                 const table = document.createElement('table');
                 table.className = 'test-cases-table';
-                
+
                 // Create header
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
@@ -802,7 +805,7 @@
                 });
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
-                
+
                 // Create body
                 const tbody = document.createElement('tbody');
                 tableData.forEach(row => {
@@ -815,30 +818,30 @@
                     tbody.appendChild(tr);
                 });
                 table.appendChild(tbody);
-                
+
                 messageDiv.appendChild(table);
-                
+
                 // Add action buttons
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'table-actions';
-                
+
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'action-btn';
                 copyBtn.textContent = 'Copy Table';
                 copyBtn.onclick = () => copyTableToClipboard(tableData);
-                
+
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'action-btn';
                 downloadBtn.textContent = 'Download CSV';
                 downloadBtn.onclick = () => downloadTableAsCSV(tableData);
-                
+
                 actionsDiv.appendChild(copyBtn);
                 actionsDiv.appendChild(downloadBtn);
                 messageDiv.appendChild(actionsDiv);
             } else {
                 messageDiv.textContent = text;
             }
-            
+
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
@@ -847,7 +850,7 @@
             const headers = Object.keys(tableData[0]).join('\t');
             const rows = tableData.map(row => Object.values(row).join('\t')).join('\n');
             const tableText = headers + '\n' + rows;
-            
+
             navigator.clipboard.writeText(tableText).then(() => {
                 alert('Table copied to clipboard!');
             }).catch(err => {
@@ -857,8 +860,8 @@
 
         async function downloadTableAsCSV(tableData) {
             const selectedModel = modelSelect.value;
-            
-            
+
+
             try {
                 const response = await fetch("{{ url_for('tcg.download_test_cases') }}", {
                     method: 'POST',
@@ -950,127 +953,99 @@
     messageDiv.className = 'message assistant-message';
     messageDiv.style.maxWidth = '95%';
     messageDiv.style.width = '95%';
-    
+
     // Add intro text
     const introDiv = document.createElement('div');
     introDiv.textContent = text;
     introDiv.style.marginBottom = '20px';
     introDiv.style.fontWeight = '600';
     messageDiv.appendChild(introDiv);
-    
+
     // Add each category
     Object.keys(categorizedData).forEach(categoryKey => {
         const category = categorizedData[categoryKey];
-        
+
         const categorySection = document.createElement('div');
         categorySection.className = 'category-section';
-        
+
         // Category header
         const headerDiv = document.createElement('div');
         headerDiv.className = 'category-header';
-        
+
         const titleDiv = document.createElement('div');
         titleDiv.className = 'category-title';
         titleDiv.textContent = category.info.name;
         headerDiv.appendChild(titleDiv);
-        
+
         const descDiv = document.createElement('div');
         descDiv.className = 'category-description';
         descDiv.textContent = category.info.description;
         headerDiv.appendChild(descDiv);
-        
+
         const focusDiv = document.createElement('div');
         focusDiv.className = 'category-focus';
         focusDiv.innerHTML = `<strong>Focus Areas:</strong> ${category.info.focus_areas.join(', ')}`;
         headerDiv.appendChild(focusDiv);
-        
+
         categorySection.appendChild(headerDiv);
-        
+
         // Test cases
         if (category.test_cases && category.test_cases.length > 0) {
             if (modelType === 'llm') {
-                // LLM format - individual test case cards
-                category.test_cases.forEach((testCase, index) => {
-                    const testCaseDiv = document.createElement('div');
-                    testCaseDiv.className = 'llm-test-case';
-                    
-                    // Header with name and severity
-                    const testHeader = document.createElement('div');
-                    testHeader.className = 'test-case-header';
-                    
-                    const testName = document.createElement('div');
-                    testName.className = 'test-case-name';
-                    testName.textContent = `${index + 1}. ${testCase.test_name || 'Unnamed Test'}`;
-                    testHeader.appendChild(testName);
-                    
-                    if (testCase.severity) {
-                        const severityBadge = document.createElement('span');
-                        severityBadge.className = `severity-badge severity-${testCase.severity.toLowerCase()}`;
-                        severityBadge.textContent = testCase.severity;
-                        testHeader.appendChild(severityBadge);
-                    }
-                    
-                    testCaseDiv.appendChild(testHeader);
-                    
-                    // Prompt section
-                    const promptSection = document.createElement('div');
-                    promptSection.className = 'test-case-section';
-                    const promptLabel = document.createElement('div');
-                    promptLabel.className = 'test-case-label';
-                    promptLabel.textContent = '📝 Test Prompt:';
-                    promptSection.appendChild(promptLabel);
-                    const promptContent = document.createElement('div');
-                    promptContent.className = 'test-case-content prompt';
-                    promptContent.textContent = testCase.prompt || 'N/A';
-                    promptSection.appendChild(promptContent);
-                    testCaseDiv.appendChild(promptSection);
-                    
-                    // Expected output section
-                    const expectedSection = document.createElement('div');
-                    expectedSection.className = 'test-case-section';
-                    const expectedLabel = document.createElement('div');
-                    expectedLabel.className = 'test-case-label';
-                    expectedLabel.textContent = '✅ Expected Output:';
-                    expectedSection.appendChild(expectedLabel);
-                    const expectedContent = document.createElement('div');
-                    expectedContent.className = 'test-case-content expected';
-                    expectedContent.textContent = testCase.expected_output || 'N/A';
-                    expectedSection.appendChild(expectedContent);
-                    testCaseDiv.appendChild(expectedSection);
-                    
-                    // Evaluation criteria section
-                    const criteriaSection = document.createElement('div');
-                    criteriaSection.className = 'test-case-section';
-                    const criteriaLabel = document.createElement('div');
-                    criteriaLabel.className = 'test-case-label';
-                    criteriaLabel.textContent = '📊 Evaluation Criteria:';
-                    criteriaSection.appendChild(criteriaLabel);
-                    const criteriaContent = document.createElement('div');
-                    criteriaContent.className = 'test-case-content criteria';
-                    criteriaContent.textContent = testCase.evaluation_criteria || 'N/A';
-                    criteriaSection.appendChild(criteriaContent);
-                    testCaseDiv.appendChild(criteriaSection);
-                    
-                    categorySection.appendChild(testCaseDiv);
-                });
-                
-                // Add copy all button for LLM tests
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'category-actions';
-                
-                const copyAllBtn = document.createElement('button');
-                copyAllBtn.className = 'copy-all-btn';
-                copyAllBtn.textContent = 'Copy All Test Cases';
-                copyAllBtn.onclick = () => copyLLMTestCases(category.test_cases, category.info.name);
-                actionsDiv.appendChild(copyAllBtn);
-                
-                categorySection.appendChild(actionsDiv);
-                
+                    // Updated: LLM format now uses a table view for separate columns
+        const table = document.createElement('table');
+        table.className = 'test-cases-table';
+
+        // Define the columns you want to display
+        const headers = ['TEST NAME', 'TEST PROMPT', 'EXPECTED OUTPUT', 'EVALUATION CRITERIA', 'SEVERITY'];
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        category.test_cases.forEach(tc => {
+            const tr = document.createElement('tr');
+            // Map the JSON keys from the Python response to the table cells
+            const values = [
+                tc.test_name,
+                tc.prompt, // Matches the new key in Python prompt
+                tc.expected_output,
+                tc.evaluation_criteria,
+                tc.severity
+            ];
+            values.forEach(v => {
+                const td = document.createElement('td');
+                td.textContent = v || 'N/A';
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        categorySection.appendChild(table);
+
+        // Add action buttons for the LLM table
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'category-actions';
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'action-btn';
+        downloadBtn.textContent = `Download ${category.info.name}`;
+        downloadBtn.onclick = () => downloadCategoryCSV(category.test_cases, categoryKey, modelSelect.value);
+
+        actionsDiv.appendChild(downloadBtn);
+        categorySection.appendChild(actionsDiv);
+
             } else {
                 // ML format - table view
                 const table = document.createElement('table');
                 table.className = 'test-cases-table';
-                
+
                 // Header
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
@@ -1081,7 +1056,7 @@
                 });
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
-                
+
                 // Body
                 const tbody = document.createElement('tbody');
                 category.test_cases.forEach(row => {
@@ -1094,9 +1069,9 @@
                     tbody.appendChild(tr);
                 });
                 table.appendChild(tbody);
-                
+
                 categorySection.appendChild(table);
-                
+
                 // Download button for ML category
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'action-btn';
@@ -1112,17 +1087,17 @@
             errorDiv.textContent = category.error;
             categorySection.appendChild(errorDiv);
         }
-        
+
         messageDiv.appendChild(categorySection);
     });
-    
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
     function copyLLMTestCases(testCases, categoryName) {
         let text = `${categoryName}\n${'='.repeat(categoryName.length)}\n\n`;
-        
+
         testCases.forEach((testCase, index) => {
             text += `Test Case ${index + 1}: ${testCase.test_name}\n`;
             text += `Severity: ${testCase.severity}\n`;
@@ -1131,7 +1106,7 @@
             text += `\nEvaluation Criteria:\n${testCase.evaluation_criteria}\n`;
             text += `\n${'-'.repeat(80)}\n\n`;
         });
-        
+
         navigator.clipboard.writeText(text).then(() => {
             alert('All test cases copied to clipboard!');
         }).catch(err => {
@@ -1168,7 +1143,7 @@
             alert('Failed to download test cases');
         }
     }
-        
+
     </script>
 </body>
 </html>

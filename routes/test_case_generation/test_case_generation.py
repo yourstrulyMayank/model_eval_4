@@ -146,18 +146,20 @@ def upload_new_model():
         if not allowed_file(test_format_file.filename, ALLOWED_TEST_FORMAT):
             return jsonify({'error': 'Test format must be CSV or XLSX file'}), 400
         
-        # Generate model name from model card filename
-        model_name = secure_filename(model_card_file.filename.rsplit('.', 1)[0])
+        # Get the original filename without extension (e.g., "Capital Risk")
+        original_filename = model_card_file.filename.rsplit('.', 1)[0]
+        # This is what will be sent back to the dropdown and used as a key
+        display_model_name = original_filename 
         
         # Extract data directly from the FileStorage object
-        model_card_text = extract_text_from_pdf(model_card_file.stream)  # Use .stream for in-memory file
+        model_card_text = extract_text_from_pdf(model_card_file.stream)
         test_format_info = read_test_format_from_file(test_format_file.stream, test_format_file.filename)
         
-        # Store in session (in-memory, will be cleared on refresh/session end)
         if 'temp_models' not in session:
             session['temp_models'] = {}
         
-        session['temp_models'][model_name] = {
+        # Store using the display name so it matches the dropdown selection exactly
+        session['temp_models'][display_model_name] = {
             'model_card': model_card_text,
             'test_format': test_format_info
         }
@@ -165,7 +167,7 @@ def upload_new_model():
         
         return jsonify({
             'success': True,
-            'model_name': model_name
+            'model_name': display_model_name
         })
         
     except Exception as e:
