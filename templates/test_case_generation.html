@@ -628,14 +628,14 @@
 
                 <input type="file" id="model-card-input" class="file-input" accept=".pdf">
                 <button class="upload-btn" onclick="document.getElementById('model-card-input').click()">
-                    Choose a Model Card
+                    Choose a Model Card (Required)
                 </button>
                 <div class="file-name" id="model-card-name">No file selected</div>
 
                 <div style="margin-top: 20px;">
                     <input type="file" id="test-format-input" class="file-input" accept=".csv,.xlsx,.xls">
-                    <button class="upload-btn" onclick="document.getElementById('test-format-input').click()">
-                        Choose a Sample Test Format
+                    <button class="upload-btn" style="background: rgba(37, 131, 34, 0.65);" onclick="document.getElementById('test-format-input').click()">
+                        Choose Sample Test Format (Optional for LLMs)
                     </button>
                     <div class="file-name" id="test-format-name">No file selected</div>
                 </div>
@@ -702,14 +702,19 @@
             const modelCardFile = modelCardInput.files[0];
             const testFormatFile = testFormatInput.files[0];
 
-            if (!modelCardFile || !testFormatFile) {
-                alert('Please select both a model card (PDF) and a test format file (CSV/XLSX)!');
+            // 1. Only enforce Model Card existence
+            if (!modelCardFile) {
+                alert('Please select a model card (PDF)!');
                 return;
             }
 
             const formData = new FormData();
             formData.append('model_card', modelCardFile);
-            formData.append('test_format', testFormatFile);
+            
+            // 2. Only append test_format if it exists
+            if (testFormatFile) {
+                formData.append('test_format', testFormatFile);
+            }
 
             const uploadBtn = document.getElementById('upload-new-model-btn');
             uploadBtn.disabled = true;
@@ -726,7 +731,6 @@
                 if (data.success) {
                     alert('Model uploaded successfully! Model name: ' + data.model_name);
 
-                    // Add new model to dropdown
                     const option = document.createElement('option');
                     option.value = data.model_name;
                     option.textContent = data.model_name;
@@ -739,27 +743,17 @@
                     modelCardName.textContent = 'No file selected';
                     testFormatName.textContent = 'No file selected';
 
-                    modelSelect.addEventListener('change', function(e) {
-                    const selectedModel = e.target.value;
+                    // Trigger the existing change listener to set model type
+                    // Since we don't know if it's LLM or ML yet (that depends on user intent),
+                    // we default to enabling the dropdown so they can choose.
                     const modelTypeSelect = document.getElementById('model-type-select');
-
-                    // Auto-select model type based on existing models
-                    const llmModels = ['Compliance Assist', 'Wealth Assist'];
-                    const mlModels = ['Capital Risk'];
-
-                    if (llmModels.includes(selectedModel)) {
+                    modelTypeSelect.disabled = false;
+                    // Default to LLM if no test format was uploaded
+                    if (!testFormatFile) {
                         modelTypeSelect.value = 'llm';
-                        modelTypeSelect.disabled = true;
-                    } else if (mlModels.includes(selectedModel)) {
-                        modelTypeSelect.value = 'ml';
-                        modelTypeSelect.disabled = true;
-                    } else {
-                        modelTypeSelect.disabled = false;
                     }
-                });
 
-                    // Add message to chat
-                    addMessage(`New model "${data.model_name}" has been added and selected. You can now generate test cases for it!`, false);
+                    addMessage(`New model "${data.model_name}" has been added. Select "LLM" or "ML" type to proceed.`, false);
                 } else {
                     alert('Error: ' + data.error);
                 }

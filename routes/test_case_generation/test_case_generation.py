@@ -131,37 +131,41 @@ def test_case_generation():
 @tcg_bp.route('/upload-new-model', methods=['POST'])
 def upload_new_model():
     try:
-        if 'model_card' not in request.files or 'test_format' not in request.files:
-            return jsonify({'error': 'Both model card and test format files are required'}), 400
+        # 1. Relax the check: Only model_card is strictly required
+        if 'model_card' not in request.files:
+            return jsonify({'error': 'Model card file is required'}), 400
         
         model_card_file = request.files['model_card']
-        test_format_file = request.files['test_format']
+        # 2. Use .get() for test_format to make it optional
+        test_format_file = request.files.get('test_format')
         
-        if model_card_file.filename == '' or test_format_file.filename == '':
-            return jsonify({'error': 'No files selected'}), 400
+        if model_card_file.filename == '':
+            return jsonify({'error': 'No model card file selected'}), 400
         
         if not allowed_file(model_card_file.filename, ALLOWED_MODEL_CARD):
             return jsonify({'error': 'Model card must be a PDF file'}), 400
         
-        if not allowed_file(test_format_file.filename, ALLOWED_TEST_FORMAT):
-            return jsonify({'error': 'Test format must be CSV or XLSX file'}), 400
+        # 3. Only validate test_format if the user actually uploaded one
+        if test_format_file and test_format_file.filename != '':
+            if not allowed_file(test_format_file.filename, ALLOWED_TEST_FORMAT):
+                return jsonify({'error': 'Test format must be CSV or XLSX file'}), 400
         
-        # Get the original filename without extension (e.g., "Capital Risk")
         original_filename = model_card_file.filename.rsplit('.', 1)[0]
-        # This is what will be sent back to the dropdown and used as a key
         display_model_name = original_filename 
         
-        # Extract data directly from the FileStorage object
         model_card_text = extract_text_from_pdf(model_card_file.stream)
-        test_format_info = read_test_format_from_file(test_format_file.stream, test_format_file.filename)
+        
+        # 4. Process test_format only if it exists
+        test_format_info = None
+        if test_format_file and test_format_file.filename != '':
+            test_format_info = read_test_format_from_file(test_format_file.stream, test_format_file.filename)
         
         if 'temp_models' not in session:
             session['temp_models'] = {}
         
-        # Store using the display name so it matches the dropdown selection exactly
         session['temp_models'][display_model_name] = {
             'model_card': model_card_text,
-            'test_format': test_format_info
+            'test_format': test_format_info # Will be None for LLMs w/o test file
         }
         session.modified = True
         
